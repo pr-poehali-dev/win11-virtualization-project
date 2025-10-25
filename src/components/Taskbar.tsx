@@ -1,6 +1,13 @@
+import { useState, useEffect } from 'react';
 import Icon from '@/components/ui/icon';
 import { AppWindow } from '@/pages/Index';
 import { Button } from '@/components/ui/button';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Slider } from '@/components/ui/slider';
 
 interface TaskbarProps {
   windows: AppWindow[];
@@ -9,16 +16,35 @@ interface TaskbarProps {
 }
 
 const Taskbar = ({ windows, onStartClick, onWindowClick }: TaskbarProps) => {
-  const now = new Date();
-  const timeString = now.toLocaleTimeString('ru-RU', {
+  const [time, setTime] = useState(new Date());
+  const [volume, setVolume] = useState(50);
+  const [isMuted, setIsMuted] = useState(false);
+
+  useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const timeString = time.toLocaleTimeString('ru-RU', {
     hour: '2-digit',
     minute: '2-digit',
   });
-  const dateString = now.toLocaleDateString('ru-RU', {
+  const dateString = time.toLocaleDateString('ru-RU', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
   });
+
+  const getWindowTitle = (title: string) => {
+    const translations: { [key: string]: string } = {
+      'Browser': 'Браузер',
+      'Notepad': 'Блокнот',
+      'Settings': 'Настройки',
+      'Explorer': 'Проводник',
+      'Documents': 'Проводник'
+    };
+    return translations[title] || title;
+  };
 
   return (
     <div className="absolute bottom-0 left-0 right-0 h-12 bg-taskbar/80 acrylic-blur border-t border-taskbar-border taskbar-shadow z-50 flex items-center px-2 gap-2">
@@ -44,18 +70,67 @@ const Taskbar = ({ windows, onStartClick, onWindowClick }: TaskbarProps) => {
             onClick={() => onWindowClick(window.id)}
           >
             <Icon name={window.icon} size={16} />
-            <span className="text-sm max-w-[150px] truncate">{window.title}</span>
+            <span className="text-sm max-w-[150px] truncate">{getWindowTitle(window.title)}</span>
           </Button>
         ))}
       </div>
 
       <div className="flex items-center gap-3 px-3">
-        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/10">
-          <Icon name="Wifi" size={16} />
-        </Button>
-        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/10">
-          <Icon name="Volume2" size={16} />
-        </Button>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/10">
+              <Icon name="Wifi" size={16} />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-64">
+            <div className="space-y-3">
+              <h4 className="font-medium">Сетевые подключения</h4>
+              <div className="flex items-center gap-3 p-2 rounded hover:bg-accent">
+                <Icon name="Wifi" size={20} className="text-primary" />
+                <div className="flex-1">
+                  <div className="font-medium">Wi-Fi</div>
+                  <div className="text-xs text-muted-foreground">Подключено</div>
+                </div>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+        
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/10">
+              <Icon name={isMuted ? "VolumeX" : volume > 50 ? "Volume2" : "Volume1"} size={16} />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-64">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="font-medium">Громкость</h4>
+                <span className="text-sm text-muted-foreground">{isMuted ? 0 : volume}%</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setIsMuted(!isMuted)}
+                >
+                  <Icon name={isMuted ? "VolumeX" : "Volume2"} size={16} />
+                </Button>
+                <Slider
+                  value={[isMuted ? 0 : volume]}
+                  onValueChange={(value) => {
+                    setVolume(value[0]);
+                    if (value[0] > 0) setIsMuted(false);
+                  }}
+                  max={100}
+                  step={1}
+                  className="flex-1"
+                />
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
         <div className="text-xs text-right">
           <div className="font-medium">{timeString}</div>
           <div className="text-muted-foreground">{dateString}</div>

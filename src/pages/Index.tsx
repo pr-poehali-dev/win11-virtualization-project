@@ -6,6 +6,7 @@ import Window from '@/components/Window';
 import Browser from '@/components/apps/Browser';
 import Notepad from '@/components/apps/Notepad';
 import Settings from '@/components/apps/Settings';
+import Explorer from '@/components/apps/Explorer';
 
 export interface FileItem {
   id: string;
@@ -54,7 +55,7 @@ const Index = () => {
         { id: '1', name: 'Browser', type: 'file', x: 50, y: 50 },
         { id: '2', name: 'Notepad', type: 'file', x: 50, y: 150 },
         { id: '3', name: 'Settings', type: 'file', x: 50, y: 250 },
-        { id: '4', name: 'Documents', type: 'folder', children: [], x: 50, y: 350 },
+        { id: '4', name: 'Explorer', type: 'file', x: 50, y: 350 },
       ];
       setFiles(defaultFiles);
     }
@@ -101,6 +102,13 @@ const Index = () => {
         icon = 'Settings';
         width = 800;
         height = 600;
+        break;
+      case 'Explorer':
+      case 'Documents':
+        component = <Explorer />;
+        icon = 'FolderOpen';
+        width = 900;
+        height = 650;
         break;
       default:
         return;

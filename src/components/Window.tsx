@@ -44,6 +44,17 @@ const Window = ({
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const windowRef = useRef<HTMLDivElement>(null);
 
+  const getDisplayTitle = (title: string) => {
+    const translations: { [key: string]: string } = {
+      'Browser': 'Браузер',
+      'Notepad': 'Блокнот',
+      'Settings': 'Настройки',
+      'Explorer': 'Проводник',
+      'Documents': 'Проводник'
+    };
+    return translations[title] || title;
+  };
+
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (isDragging && !isMaximized) {
@@ -113,7 +124,7 @@ const Window = ({
       >
         <div className="flex items-center gap-2">
           <Icon name={icon} size={16} />
-          <span className="text-sm font-medium">{title}</span>
+          <span className="text-sm font-medium">{getDisplayTitle(title)}</span>
         </div>
         <div className="flex items-center gap-1">
           <Button

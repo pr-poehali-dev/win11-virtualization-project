@@ -8,9 +8,10 @@ interface StartMenuProps {
 }
 
 const apps = [
-  { name: 'Browser', icon: 'Globe', color: 'bg-blue-500' },
-  { name: 'Notepad', icon: 'FileText', color: 'bg-yellow-500' },
-  { name: 'Settings', icon: 'Settings', color: 'bg-gray-500' },
+  { name: 'Browser', displayName: 'Браузер', icon: 'Globe', color: 'bg-blue-500' },
+  { name: 'Notepad', displayName: 'Блокнот', icon: 'FileText', color: 'bg-yellow-500' },
+  { name: 'Explorer', displayName: 'Проводник', icon: 'FolderOpen', color: 'bg-orange-500' },
+  { name: 'Settings', displayName: 'Настройки', icon: 'Settings', color: 'bg-gray-500' },
 ];
 
 const StartMenu = ({ onAppClick, onClose }: StartMenuProps) => {
@@ -44,7 +45,7 @@ const StartMenu = ({ onAppClick, onClose }: StartMenuProps) => {
               <div className={`w-12 h-12 ${app.color} rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform`}>
                 <Icon name={app.icon} size={24} className="text-white" />
               </div>
-              <span className="text-sm">{app.name}</span>
+              <span className="text-sm">{app.displayName}</span>
             </Button>
           ))}
         </div>

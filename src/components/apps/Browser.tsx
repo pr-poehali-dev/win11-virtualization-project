@@ -11,10 +11,17 @@ const Browser = () => {
 
   const handleNavigate = () => {
     let newUrl = inputUrl.trim();
+    
     if (!newUrl.startsWith('http://') && !newUrl.startsWith('https://')) {
-      newUrl = 'https://' + newUrl;
+      if (newUrl.includes('.')) {
+        newUrl = 'https://' + newUrl;
+      } else {
+        newUrl = 'https://www.google.com/search?igu=1&q=' + encodeURIComponent(newUrl);
+      }
     }
+    
     setUrl(newUrl);
+    setInputUrl(newUrl);
     setIsLoading(true);
   };
 
@@ -91,14 +98,15 @@ const Browser = () => {
         </Button>
       </div>
 
-      <div className="flex-1 relative">
+      <div className="flex-1 relative bg-background">
         <iframe
           ref={iframeRef}
           src={url}
           className="w-full h-full border-0"
-          sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"
+          sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
           onLoad={handleIframeLoad}
           title="Browser content"
+          referrerPolicy="no-referrer"
         />
       </div>
     </div>

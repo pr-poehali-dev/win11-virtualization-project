@@ -47,6 +47,12 @@ const Desktop = ({
     });
   };
 
+  const GRID_SIZE = 100;
+
+  const snapToGrid = (value: number) => {
+    return Math.round(value / GRID_SIZE) * GRID_SIZE;
+  };
+
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!draggingFile) return;
     const newX = e.clientX - dragOffset.x;
@@ -55,6 +61,14 @@ const Desktop = ({
   };
 
   const handleMouseUp = () => {
+    if (draggingFile) {
+      const file = files.find(f => f.id === draggingFile);
+      if (file) {
+        const snappedX = snapToGrid(file.x || 0);
+        const snappedY = snapToGrid(file.y || 0);
+        onFilePositionChange(draggingFile, snappedX, snappedY);
+      }
+    }
     setDraggingFile(null);
   };
 
@@ -70,6 +84,17 @@ const Desktop = ({
       setCreateDialogOpen(false);
       setNewItemName('');
     }
+  };
+
+  const getDisplayName = (name: string) => {
+    const translations: { [key: string]: string } = {
+      'Browser': 'Браузер',
+      'Notepad': 'Блокнот',
+      'Settings': 'Настройки',
+      'Documents': 'Документы',
+      'Explorer': 'Проводник'
+    };
+    return translations[name] || name;
   };
 
   return (
@@ -99,7 +124,7 @@ const Desktop = ({
                       />
                     </div>
                     <span className="text-white text-xs text-center max-w-[80px] truncate drop-shadow-md">
-                      {file.name}
+                      {getDisplayName(file.name)}
                     </span>
                   </div>
                 </ContextMenuTrigger>
@@ -159,6 +184,7 @@ const getFileIcon = (name: string): string => {
   if (name === 'Browser') return 'Globe';
   if (name === 'Notepad') return 'FileText';
   if (name === 'Settings') return 'Settings';
+  if (name === 'Explorer') return 'FolderOpen';
   return 'File';
 };
 
