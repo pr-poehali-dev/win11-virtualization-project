@@ -82,15 +82,6 @@ const Index = () => {
   };
 
   const openApp = (appName: string) => {
-    // Проверяем, это файл или приложение
-    const file = files.find(f => f.name === appName);
-    
-    // Если это текстовый файл, открываем его в Notepad
-    if (file && file.type === 'file') {
-      openFileInNotepad(appName);
-      return;
-    }
-    
     const existingWindow = windows.find(w => w.title === appName);
     if (existingWindow) {
       focusWindow(existingWindow.id);

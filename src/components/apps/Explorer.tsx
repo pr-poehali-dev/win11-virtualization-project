@@ -42,6 +42,8 @@ const Explorer = () => {
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [renamingItemId, setRenamingItemId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
+  const [draggingItem, setDraggingItem] = useState<FileItem | null>(null);
+  const [dragOverFolder, setDragOverFolder] = useState<string | null>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem('explorer-structure');
@@ -155,6 +157,74 @@ const Explorer = () => {
     }
   };
 
+  const handleDragStart = (e: React.DragEvent, file: FileItem) => {
+    e.stopPropagation();
+    setDraggingItem(file);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent, folderId?: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = 'move';
+    if (folderId) {
+      setDragOverFolder(folderId);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverFolder(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, targetFolder?: FileItem) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverFolder(null);
+
+    if (!draggingItem) return;
+
+    // Нельзя перетащить папку в саму себя
+    if (targetFolder && draggingItem.id === targetFolder.id) {
+      toast.error('Нельзя переместить папку в саму себя');
+      setDraggingItem(null);
+      return;
+    }
+
+    const pathKey = currentPath.join(' > ');
+    const currentFiles = folderStructure[pathKey] || [];
+
+    if (targetFolder && targetFolder.type === 'folder') {
+      // Перемещаем в другую папку
+      const targetPathKey = [...currentPath, targetFolder.name].join(' > ');
+      const targetFiles = folderStructure[targetPathKey] || [];
+
+      // Проверяем, есть ли уже файл с таким именем в целевой папке
+      if (targetFiles.some(f => f.name === draggingItem.name)) {
+        toast.error(`Файл "${draggingItem.name}" уже существует в папке "${targetFolder.name}"`);
+        setDraggingItem(null);
+        return;
+      }
+
+      // Удаляем из текущей папки
+      const updatedCurrentFiles = currentFiles.filter(f => f.id !== draggingItem.id);
+      
+      // Добавляем в целевую папку
+      const updatedTargetFiles = [...targetFiles, draggingItem];
+
+      setFolderStructure({
+        ...folderStructure,
+        [pathKey]: updatedCurrentFiles,
+        [targetPathKey]: updatedTargetFiles
+      });
+
+      toast.success(`"${draggingItem.name}" перемещён в "${targetFolder.name}"`);
+    }
+
+    setDraggingItem(null);
+  };
+
   const currentFiles = getCurrentFiles();
 
   return (
@@ -235,7 +305,16 @@ const Explorer = () => {
             {currentFiles.map(file => (
               <div
                 key={file.id}
-                className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent/50 cursor-pointer group"
+                draggable
+                onDragStart={(e) => handleDragStart(e, file)}
+                onDragOver={(e) => file.type === 'folder' ? handleDragOver(e, file.id) : e.preventDefault()}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => file.type === 'folder' ? handleDrop(e, file) : e.preventDefault()}
+                className={`flex items-center gap-3 p-3 rounded-lg hover:bg-accent/50 cursor-pointer group transition-colors ${
+                  dragOverFolder === file.id ? 'bg-blue-500/20 border-2 border-blue-500' : ''
+                } ${
+                  draggingItem?.id === file.id ? 'opacity-50' : ''
+                }`}
                 onDoubleClick={() => file.type === 'folder' && handleNavigate(file.name)}
               >
                 <Icon
