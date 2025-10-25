@@ -49,7 +49,7 @@ const Settings = ({ theme, onThemeChange }: SettingsProps) => {
   );
 
   const renderPersonalizationPage = () => (
-    <div>
+    <div key={`theme-${theme}`}>
       <Button variant="ghost" className="mb-6" onClick={() => setCurrentPage('main')}>
         <Icon name="ChevronLeft" className="mr-2" size={16} />
         Назад
@@ -72,7 +72,7 @@ const Settings = ({ theme, onThemeChange }: SettingsProps) => {
             <Switch
               id="theme-toggle"
               checked={theme === 'dark'}
-              onCheckedChange={onThemeChange}
+              onCheckedChange={() => onThemeChange()}
             />
           </div>
         </div>

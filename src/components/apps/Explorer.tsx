@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Icon from '@/components/ui/icon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,22 +20,54 @@ interface FileItem {
   children?: FileItem[];
 }
 
+interface FolderStructure {
+  [key: string]: FileItem[];
+}
+
 const Explorer = () => {
   const [currentPath, setCurrentPath] = useState(['Этот компьютер']);
-  const [files, setFiles] = useState<FileItem[]>([
-    { id: '1', name: 'Документы', type: 'folder', modified: '25.10.2025', children: [] },
-    { id: '2', name: 'Загрузки', type: 'folder', modified: '25.10.2025', children: [] },
-    { id: '3', name: 'Изображения', type: 'folder', modified: '25.10.2025', children: [] },
-    { id: '4', name: 'Музыка', type: 'folder', modified: '25.10.2025', children: [] },
-    { id: '5', name: 'Видео', type: 'folder', modified: '25.10.2025', children: [] },
-    { id: '6', name: 'Рабочий стол', type: 'folder', modified: '25.10.2025', children: [] },
-  ]);
+  const [folderStructure, setFolderStructure] = useState<FolderStructure>({
+    'Этот компьютер': [
+      { id: '1', name: 'Документы', type: 'folder', modified: '25.10.2025', children: [] },
+      { id: '2', name: 'Загрузки', type: 'folder', modified: '25.10.2025', children: [] },
+      { id: '3', name: 'Изображения', type: 'folder', modified: '25.10.2025', children: [] },
+      { id: '4', name: 'Музыка', type: 'folder', modified: '25.10.2025', children: [] },
+      { id: '5', name: 'Видео', type: 'folder', modified: '25.10.2025', children: [] },
+      { id: '6', name: 'Рабочий стол', type: 'folder', modified: '25.10.2025', children: [] },
+    ]
+  });
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [newItemName, setNewItemName] = useState('');
   const [newItemType, setNewItemType] = useState<'file' | 'folder'>('folder');
 
+  useEffect(() => {
+    const saved = localStorage.getItem('explorer-structure');
+    if (saved) {
+      setFolderStructure(JSON.parse(saved));
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('explorer-structure', JSON.stringify(folderStructure));
+  }, [folderStructure]);
+
+  const getCurrentFiles = (): FileItem[] => {
+    const pathKey = currentPath.join(' > ');
+    return folderStructure[pathKey] || [];
+  };
+
   const handleNavigate = (folderName: string) => {
-    setCurrentPath([...currentPath, folderName]);
+    const newPath = [...currentPath, folderName];
+    const pathKey = newPath.join(' > ');
+    
+    if (!folderStructure[pathKey]) {
+      setFolderStructure({
+        ...folderStructure,
+        [pathKey]: []
+      });
+    }
+    
+    setCurrentPath(newPath);
   };
 
   const handleBack = () => {
@@ -52,6 +84,7 @@ const Explorer = () => {
 
   const handleCreateConfirm = () => {
     if (newItemName.trim()) {
+      const pathKey = currentPath.join(' > ');
       const newItem: FileItem = {
         id: `item-${Date.now()}`,
         name: newItemName,
@@ -60,7 +93,13 @@ const Explorer = () => {
         size: newItemType === 'file' ? '0 КБ' : undefined,
         children: newItemType === 'folder' ? [] : undefined,
       };
-      setFiles([...files, newItem]);
+      
+      const currentFiles = folderStructure[pathKey] || [];
+      setFolderStructure({
+        ...folderStructure,
+        [pathKey]: [...currentFiles, newItem]
+      });
+      
       setCreateDialogOpen(false);
       setNewItemName('');
       toast.success(`${newItemType === 'folder' ? 'Папка' : 'Файл'} создан!`);
@@ -69,10 +108,19 @@ const Explorer = () => {
 
   const handleDelete = (id: string) => {
     if (confirm('Вы уверены, что хотите удалить этот элемент?')) {
-      setFiles(files.filter(f => f.id !== id));
+      const pathKey = currentPath.join(' > ');
+      const currentFiles = folderStructure[pathKey] || [];
+      
+      setFolderStructure({
+        ...folderStructure,
+        [pathKey]: currentFiles.filter(f => f.id !== id)
+      });
+      
       toast.success('Элемент удален');
     }
   };
+
+  const currentFiles = getCurrentFiles();
 
   return (
     <div className="h-full flex flex-col bg-background">
@@ -142,38 +190,45 @@ const Explorer = () => {
       </div>
 
       <div className="flex-1 overflow-auto p-4">
-        <div className="grid grid-cols-1 gap-1">
-          {files.map(file => (
-            <div
-              key={file.id}
-              className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent/50 cursor-pointer group"
-              onDoubleClick={() => file.type === 'folder' && handleNavigate(file.name)}
-            >
-              <Icon
-                name={file.type === 'folder' ? 'Folder' : 'FileText'}
-                size={20}
-                className={file.type === 'folder' ? 'text-yellow-500' : 'text-blue-500'}
-              />
-              <div className="flex-1">
-                <div className="font-medium">{file.name}</div>
-                <div className="text-xs text-muted-foreground">
-                  {file.type === 'folder' ? 'Папка с файлами' : file.size} • {file.modified}
-                </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 opacity-0 group-hover:opacity-100"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDelete(file.id);
-                }}
+        {currentFiles.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+            <Icon name="FolderOpen" size={64} className="mb-4 opacity-20" />
+            <p>Эта папка пуста</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-1">
+            {currentFiles.map(file => (
+              <div
+                key={file.id}
+                className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent/50 cursor-pointer group"
+                onDoubleClick={() => file.type === 'folder' && handleNavigate(file.name)}
               >
-                <Icon name="Trash2" size={16} />
-              </Button>
-            </div>
-          ))}
-        </div>
+                <Icon
+                  name={file.type === 'folder' ? 'Folder' : 'FileText'}
+                  size={20}
+                  className={file.type === 'folder' ? 'text-yellow-500' : 'text-blue-500'}
+                />
+                <div className="flex-1">
+                  <div className="font-medium">{file.name}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {file.type === 'folder' ? 'Папка с файлами' : file.size} • {file.modified}
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 opacity-0 group-hover:opacity-100"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(file.id);
+                  }}
+                >
+                  <Icon name="Trash2" size={16} />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
