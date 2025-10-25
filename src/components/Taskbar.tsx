@@ -13,12 +13,34 @@ interface TaskbarProps {
   windows: AppWindow[];
   onStartClick: () => void;
   onWindowClick: (id: string) => void;
+  volume?: number;
+  isMuted?: boolean;
+  onVolumeChange?: (volume: number) => void;
+  onMutedChange?: (muted: boolean) => void;
 }
 
-const Taskbar = ({ windows, onStartClick, onWindowClick }: TaskbarProps) => {
+const Taskbar = ({ 
+  windows, 
+  onStartClick, 
+  onWindowClick,
+  volume: externalVolume,
+  isMuted: externalMuted,
+  onVolumeChange,
+  onMutedChange
+}: TaskbarProps) => {
   const [time, setTime] = useState(new Date());
-  const [volume, setVolume] = useState(50);
-  const [isMuted, setIsMuted] = useState(false);
+  const [brightness, setBrightness] = useState(100);
+  
+  const volume = externalVolume ?? 50;
+  const isMuted = externalMuted ?? false;
+  
+  const setVolume = (value: number) => {
+    onVolumeChange?.(value);
+  };
+  
+  const setIsMuted = (value: boolean) => {
+    onMutedChange?.(value);
+  };
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
@@ -83,7 +105,7 @@ const Taskbar = ({ windows, onStartClick, onWindowClick }: TaskbarProps) => {
               <Icon name="Wifi" size={16} />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-64">
+          <PopoverContent className="w-64 z-[10001]">
             <div className="space-y-3">
               <h4 className="font-medium">Сетевые подключения</h4>
               <div className="flex items-center gap-3 p-2 rounded hover:bg-accent">
@@ -103,7 +125,7 @@ const Taskbar = ({ windows, onStartClick, onWindowClick }: TaskbarProps) => {
               <Icon name={isMuted ? "VolumeX" : volume > 50 ? "Volume2" : "Volume1"} size={16} />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-64">
+          <PopoverContent className="w-64 z-[10001]">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h4 className="font-medium">Громкость</h4>
@@ -132,6 +154,36 @@ const Taskbar = ({ windows, onStartClick, onWindowClick }: TaskbarProps) => {
             </div>
           </PopoverContent>
         </Popover>
+
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/10">
+              <Icon name="Sun" size={16} />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-64 z-[10001]">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="font-medium">Яркость</h4>
+                <span className="text-sm text-muted-foreground">{brightness}%</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Icon name="Sun" size={16} />
+                <Slider
+                  value={[brightness]}
+                  onValueChange={(value) => {
+                    setBrightness(value[0]);
+                    document.documentElement.style.filter = `brightness(${value[0]}%)`;
+                  }}
+                  max={100}
+                  step={1}
+                  className="flex-1"
+                />
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+
         <div className="text-xs text-right">
           <div className="font-medium">{timeString}</div>
           <div className="text-muted-foreground">{dateString}</div>

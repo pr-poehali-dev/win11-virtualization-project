@@ -8,6 +8,8 @@ import Notepad from '@/components/apps/Notepad';
 import Settings from '@/components/apps/Settings';
 import Explorer from '@/components/apps/Explorer';
 import Calculator from '@/components/apps/Calculator';
+import Paint from '@/components/apps/Paint';
+import ImageViewer from '@/components/apps/ImageViewer';
 
 export interface FileItem {
   id: string;
@@ -40,6 +42,8 @@ const Index = () => {
   const [windows, setWindows] = useState<AppWindow[]>([]);
   const [files, setFiles] = useState<FileItem[]>([]);
   const [nextZIndex, setNextZIndex] = useState(100);
+  const [globalVolume, setGlobalVolume] = useState(50);
+  const [globalMuted, setGlobalMuted] = useState(false);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('windows-theme') as 'light' | 'dark' | null;
@@ -58,6 +62,7 @@ const Index = () => {
         { id: '2', name: 'Notepad', type: 'file', x: 50, y: 150 },
         { id: '3', name: 'Calculator', type: 'file', x: 50, y: 250 },
         { id: '4', name: 'Explorer', type: 'file', x: 50, y: 350 },
+        { id: '5', name: 'Paint', type: 'file', x: 50, y: 450 },
       ];
       setFiles(defaultFiles);
     }
@@ -66,6 +71,19 @@ const Index = () => {
   useEffect(() => {
     localStorage.setItem('windows-files', JSON.stringify(files));
   }, [files]);
+
+  useEffect(() => {
+    const allMedia = document.querySelectorAll('audio, video');
+    allMedia.forEach((media) => {
+      const element = media as HTMLMediaElement;
+      if (globalMuted) {
+        element.muted = true;
+      } else {
+        element.muted = false;
+        element.volume = globalVolume / 100;
+      }
+    });
+  }, [globalVolume, globalMuted]);
 
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
@@ -130,6 +148,12 @@ const Index = () => {
         icon = 'FolderOpen';
         width = 900;
         height = 650;
+        break;
+      case 'Paint':
+        component = <Paint fileName='Рисунок' onSave={saveFileContent} />;
+        icon = 'Paintbrush';
+        width = 900;
+        height = 700;
         break;
       default:
         if (files.find(f => f.name === appName && f.type === 'folder')) {
@@ -379,6 +403,10 @@ const Index = () => {
         windows={windows}
         onStartClick={() => setStartMenuOpen(!startMenuOpen)}
         onWindowClick={focusWindow}
+        volume={globalVolume}
+        isMuted={globalMuted}
+        onVolumeChange={setGlobalVolume}
+        onMutedChange={setGlobalMuted}
       />
 
       {startMenuOpen && (
