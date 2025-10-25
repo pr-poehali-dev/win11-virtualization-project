@@ -31,6 +31,7 @@ export interface AppWindow {
   width: number;
   height: number;
   zIndex: number;
+  fileId?: string;
 }
 
 const Index = () => {
@@ -81,6 +82,15 @@ const Index = () => {
   };
 
   const openApp = (appName: string) => {
+    // Проверяем, это файл или приложение
+    const file = files.find(f => f.name === appName);
+    
+    // Если это текстовый файл, открываем его в Notepad
+    if (file && file.type === 'file') {
+      openFileInNotepad(appName);
+      return;
+    }
+    
     const existingWindow = windows.find(w => w.title === appName);
     if (existingWindow) {
       focusWindow(existingWindow.id);
@@ -100,7 +110,13 @@ const Index = () => {
         height = 700;
         break;
       case 'Notepad':
-        component = <Notepad />;
+        component = (
+          <Notepad 
+            fileName='Новый документ'
+            initialContent=''
+            onSave={(content, fileName, fileId) => saveFileContent(content, fileName, fileId)}
+          />
+        );
         icon = 'FileText';
         width = 700;
         height = 500;
@@ -226,6 +242,58 @@ const Index = () => {
     ));
   };
 
+  const saveFileContent = (content: string, fileName: string, fileId?: string) => {
+    if (fileId) {
+      // Сохранить в существующий файл
+      setFiles(files.map(f => 
+        f.id === fileId ? { ...f, content } : f
+      ));
+    } else {
+      // Создать новый файл
+      const newFile: FileItem = {
+        id: `file-${Date.now()}`,
+        name: fileName.endsWith('.txt') ? fileName : `${fileName}.txt`,
+        type: 'file',
+        content,
+        x: 50,
+        y: 50 + files.length * 100,
+      };
+      setFiles([...files, newFile]);
+    }
+  };
+
+  const openFileInNotepad = (fileName: string) => {
+    const file = files.find(f => f.name === fileName && f.type === 'file');
+    if (file) {
+      const component = (
+        <Notepad 
+          fileId={file.id}
+          fileName={file.name}
+          initialContent={file.content || ''}
+          onSave={(content, fileName, fileId) => saveFileContent(content, fileName, fileId)}
+        />
+      );
+      
+      const newWindow: AppWindow = {
+        id: `window-${Date.now()}`,
+        title: file.name,
+        icon: 'FileText',
+        component,
+        isMinimized: false,
+        isMaximized: false,
+        x: 100 + windows.length * 30,
+        y: 50 + windows.length * 30,
+        width: 700,
+        height: 500,
+        zIndex: nextZIndex,
+        fileId: file.id,
+      };
+      
+      setWindows([...windows, newWindow]);
+      setNextZIndex(nextZIndex + 1);
+    }
+  };
+
   return (
     <div className="h-screen w-screen overflow-hidden relative bg-desktop">
       <Desktop 
@@ -237,10 +305,27 @@ const Index = () => {
       />
       
       {windows.map(window => {
+        let component = window.component;
+        
         // Always use current theme for Settings window
-        const component = window.title === 'Settings'
-          ? <Settings theme={theme} onThemeChange={toggleTheme} />
-          : window.component;
+        if (window.title === 'Settings') {
+          component = <Settings theme={theme} onThemeChange={toggleTheme} />;
+        }
+        
+        // Always use current file content for Notepad windows
+        if (window.fileId) {
+          const file = files.find(f => f.id === window.fileId);
+          if (file) {
+            component = (
+              <Notepad 
+                fileId={file.id}
+                fileName={file.name}
+                initialContent={file.content || ''}
+                onSave={(content, fileName, fileId) => saveFileContent(content, fileName, fileId)}
+              />
+            );
+          }
+        }
           
         return (
           !window.isMinimized && (

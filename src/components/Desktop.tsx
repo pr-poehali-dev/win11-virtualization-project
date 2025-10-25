@@ -60,12 +60,27 @@ const Desktop = ({
     onFilePositionChange(draggingFile, newX, newY);
   };
 
+  const isPositionOccupied = (x: number, y: number, excludeId: string) => {
+    return files.some(f => f.id !== excludeId && f.x === x && f.y === y);
+  };
+
   const handleMouseUp = () => {
     if (draggingFile) {
       const file = files.find(f => f.id === draggingFile);
       if (file) {
-        const snappedX = snapToGrid(file.x || 0);
-        const snappedY = snapToGrid(file.y || 0);
+        let snappedX = snapToGrid(file.x || 0);
+        let snappedY = snapToGrid(file.y || 0);
+        
+        // Если позиция занята, найти ближайшую свободную
+        while (isPositionOccupied(snappedX, snappedY, draggingFile)) {
+          snappedY += GRID_SIZE;
+          // Если вышли за границы экрана по Y, переходим на следующую колонку
+          if (snappedY > window.innerHeight - 150) {
+            snappedY = 20;
+            snappedX += GRID_SIZE;
+          }
+        }
+        
         onFilePositionChange(draggingFile, snappedX, snappedY);
       }
     }
@@ -156,7 +171,7 @@ const Desktop = ({
       </ContextMenu>
 
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-        <DialogContent>
+        <DialogContent className="z-[10000]">
           <DialogHeader>
             <DialogTitle>
               {newItemType === 'file' ? 'Создать файл' : 'Создать папку'}

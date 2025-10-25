@@ -232,7 +232,7 @@ const Explorer = () => {
       </div>
 
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-        <DialogContent>
+        <DialogContent className="z-[10000]">
           <DialogHeader>
             <DialogTitle>
               {newItemType === 'file' ? 'Создать файл' : 'Создать папку'}

@@ -1,23 +1,58 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Icon from '@/components/ui/icon';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 
-const Notepad = () => {
-  const [content, setContent] = useState('');
+interface NotepadProps {
+  fileId?: string;
+  fileName?: string;
+  initialContent?: string;
+  onSave: (content: string, fileName: string, fileId?: string) => void;
+}
+
+const Notepad = ({ fileId, fileName: initialFileName = 'Новый документ', initialContent = '', onSave }: NotepadProps) => {
+  const [content, setContent] = useState(initialContent);
+  const [fileName, setFileName] = useState(initialFileName);
+  const [currentFileId, setCurrentFileId] = useState(fileId);
   const [isBold, setIsBold] = useState(false);
   const [isItalic, setIsItalic] = useState(false);
+  const [saveAsDialogOpen, setSaveAsDialogOpen] = useState(false);
+  const [newFileName, setNewFileName] = useState('');
+
+  useEffect(() => {
+    setContent(initialContent);
+    setFileName(initialFileName);
+    setCurrentFileId(fileId);
+  }, [initialContent, initialFileName, fileId]);
 
   const handleSave = () => {
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'document.txt';
-    a.click();
-    URL.revokeObjectURL(url);
+    if (!currentFileId) {
+      // Если файл еще не сохранялся, открываем диалог "Сохранить как"
+      setSaveAsDialogOpen(true);
+      return;
+    }
+    
+    onSave(content, fileName, currentFileId);
     toast.success('Файл сохранен!');
+  };
+
+  const handleSaveAs = () => {
+    setNewFileName(fileName);
+    setSaveAsDialogOpen(true);
+  };
+
+  const handleSaveAsConfirm = () => {
+    if (newFileName.trim()) {
+      const finalFileName = newFileName.endsWith('.txt') ? newFileName : `${newFileName}.txt`;
+      onSave(content, finalFileName, undefined); // undefined означает создание нового файла
+      setFileName(finalFileName);
+      setCurrentFileId(`file-${Date.now()}`);
+      setSaveAsDialogOpen(false);
+      toast.success('Файл сохранен как ' + finalFileName);
+    }
   };
 
   const handleNew = () => {
@@ -25,6 +60,8 @@ const Notepad = () => {
       return;
     }
     setContent('');
+    setFileName('Новый документ');
+    setCurrentFileId(undefined);
     toast.info('Создан новый документ');
   };
 
@@ -48,6 +85,15 @@ const Notepad = () => {
         >
           <Icon name="Save" size={16} />
           Сохранить
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 gap-2"
+          onClick={handleSaveAs}
+        >
+          <Icon name="Save" size={16} />
+          Сохранить как
         </Button>
         
         <div className="w-px h-6 bg-border mx-2" />
@@ -85,6 +131,27 @@ const Notepad = () => {
           isBold ? 'font-bold' : ''
         } ${isItalic ? 'italic' : ''}`}
       />
+
+      <Dialog open={saveAsDialogOpen} onOpenChange={setSaveAsDialogOpen}>
+        <DialogContent className="z-[10000]">
+          <DialogHeader>
+            <DialogTitle>Сохранить как</DialogTitle>
+          </DialogHeader>
+          <Input
+            placeholder="Введите имя файла..."
+            value={newFileName}
+            onChange={(e) => setNewFileName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSaveAsConfirm()}
+            autoFocus
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSaveAsDialogOpen(false)}>
+              Отмена
+            </Button>
+            <Button onClick={handleSaveAsConfirm}>Сохранить</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

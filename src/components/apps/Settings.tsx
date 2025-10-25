@@ -126,10 +126,10 @@ const Settings = ({ theme, onThemeChange }: SettingsProps) => {
           <div>
             <div className="flex justify-between mb-2">
               <span className="text-sm text-muted-foreground">Локальный диск (C:)</span>
-              <span className="text-sm font-medium">45 ГБ / 256 ГБ</span>
+              <span className="text-sm font-medium">свободно ? из ?</span>
             </div>
             <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
-              <div className="h-full bg-primary rounded-full" style={{ width: '18%' }} />
+              <div className="h-full bg-white rounded-full" style={{ width: '100%' }} />
             </div>
           </div>
           <div className="pt-4 mt-4 border-t border-border">
@@ -137,15 +137,15 @@ const Settings = ({ theme, onThemeChange }: SettingsProps) => {
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Документы</span>
-                <span>12 ГБ</span>
+                <span>?</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Система</span>
-                <span>25 ГБ</span>
+                <span>?</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Прочее</span>
-                <span>8 ГБ</span>
+                <span>?</span>
               </div>
             </div>
           </div>
