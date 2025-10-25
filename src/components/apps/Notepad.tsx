@@ -19,6 +19,7 @@ const Notepad = ({ fileId, fileName: initialFileName = 'Новый докуме�
   const [currentFileId, setCurrentFileId] = useState(fileId);
   const [isBold, setIsBold] = useState(false);
   const [isItalic, setIsItalic] = useState(false);
+  const [isUnderline, setIsUnderline] = useState(false);
   const [saveAsDialogOpen, setSaveAsDialogOpen] = useState(false);
   const [newFileName, setNewFileName] = useState('');
 
@@ -125,9 +126,10 @@ const Notepad = ({ fileId, fileName: initialFileName = 'Новый докуме�
           <Icon name="Italic" size={16} />
         </Button>
         <Button
-          variant="ghost"
+          variant={isUnderline ? 'secondary' : 'ghost'}
           size="icon"
           className="h-8 w-8"
+          onClick={() => setIsUnderline(!isUnderline)}
         >
           <Icon name="Underline" size={16} />
         </Button>
@@ -139,7 +141,7 @@ const Notepad = ({ fileId, fileName: initialFileName = 'Новый докуме�
         placeholder="Начните печатать..."
         className={`flex-1 border-0 rounded-none focus-visible:ring-0 resize-none p-4 font-mono ${
           isBold ? 'font-bold' : ''
-        } ${isItalic ? 'italic' : ''}`}
+        } ${isItalic ? 'italic' : ''} ${isUnderline ? 'underline' : ''}`}
       />
 
       <Dialog open={saveAsDialogOpen} onOpenChange={setSaveAsDialogOpen}>

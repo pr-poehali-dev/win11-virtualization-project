@@ -98,12 +98,19 @@ const Paint = ({ fileName = 'Рисунок', onSave }: PaintProps) => {
     const canvas = canvasRef.current;
     if (!canvas || !onSave) return;
 
+    if (!saveFileName.trim()) {
+      toast.error('Введите имя файла');
+      return;
+    }
+
+    const finalFileName = saveFileName.endsWith('.png') ? saveFileName : `${saveFileName}.png`;
     const dataUrl = canvas.toDataURL('image/png');
-    const result = onSave(saveFileName, dataUrl);
+    const result = onSave(dataUrl, finalFileName);
     
     if (result.success) {
       toast.success('Рисунок сохранён');
       setSaveDialogOpen(false);
+      setSaveFileName(fileName);
     } else {
       toast.error(result.error || 'Ошибка сохранения');
     }

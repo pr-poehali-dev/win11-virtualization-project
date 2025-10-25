@@ -162,10 +162,17 @@ const Index = () => {
           width = 900;
           height = 650;
         } else if (files.find(f => f.name === appName && f.type === 'file')) {
-          component = <Notepad />;
-          icon = 'FileText';
-          width = 700;
-          height = 500;
+          // Check file extension to determine which app to open
+          if (appName.endsWith('.png') || appName.endsWith('.jpg') || appName.endsWith('.jpeg') || appName.endsWith('.gif')) {
+            const file = files.find(f => f.name === appName);
+            component = <ImageViewer imageSrc={file?.content || ''} />;
+            icon = 'Image';
+            width = 900;
+            height = 700;
+          } else {
+            openFileInNotepad(appName);
+            return;
+          }
         } else {
           return;
         }
@@ -278,22 +285,24 @@ const Index = () => {
   };
 
   const saveFileContent = (content: string, fileName: string, fileId?: string): { success: boolean; error?: string } => {
-    const finalFileName = fileName.endsWith('.txt') ? fileName : `${fileName}.txt`;
+    // Determine file extension - if no extension, add .txt
+    const hasExtension = /\.\w+$/.test(fileName);
+    const finalFileName = hasExtension ? fileName : `${fileName}.txt`;
     
     if (fileId) {
-      // Сохранить в существующий файл
+      // Save to existing file
       setFiles(files.map(f => 
         f.id === fileId ? { ...f, content } : f
       ));
       return { success: true };
     } else {
-      // Проверить, существует ли файл с таким именем
+      // Check if file with this name already exists
       const existingFile = files.find(f => f.name === finalFileName);
       if (existingFile) {
         return { success: false, error: `Файл "${finalFileName}" уже существует на этом ПК` };
       }
       
-      // Создать новый файл
+      // Create new file
       const newFile: FileItem = {
         id: `file-${Date.now()}`,
         name: finalFileName,

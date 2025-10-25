@@ -30,7 +30,7 @@ const StartMenu = ({ onAppClick, onClose }: StartMenuProps) => {
   }, [onClose]);
 
   return (
-    <div className="start-menu absolute bottom-14 left-2 w-[600px] h-[600px] bg-card/95 acrylic-blur rounded-xl window-shadow border border-border animate-slide-up overflow-hidden">
+    <div className="start-menu absolute bottom-14 left-2 w-[600px] h-[600px] bg-card/95 acrylic-blur rounded-xl window-shadow border border-border animate-slide-up overflow-hidden z-[10002]">
       <div className="p-6 h-full flex flex-col">
         <div className="mb-6">
           <h2 className="text-2xl font-semibold mb-2">Закрепленные</h2>
