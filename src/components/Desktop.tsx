@@ -196,7 +196,7 @@ const Desktop = ({
             ))}
           </div>
         </ContextMenuTrigger>
-        <ContextMenuContent>
+        <ContextMenuContent className="z-[10000]">
           <ContextMenuItem onClick={() => handleCreateNew('file')}>
             <Icon name="FileText" className="mr-2" size={16} />
             Новый файл

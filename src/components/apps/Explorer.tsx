@@ -39,6 +39,9 @@ const Explorer = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [newItemName, setNewItemName] = useState('');
   const [newItemType, setNewItemType] = useState<'file' | 'folder'>('folder');
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [renamingItemId, setRenamingItemId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
 
   useEffect(() => {
     const saved = localStorage.getItem('explorer-structure');
@@ -117,6 +120,38 @@ const Explorer = () => {
       });
       
       toast.success('Элемент удален');
+    }
+  };
+
+  const handleRename = (id: string, currentName: string) => {
+    setRenamingItemId(id);
+    setRenameValue(currentName);
+    setRenameDialogOpen(true);
+  };
+
+  const handleRenameConfirm = () => {
+    if (renameValue.trim() && renamingItemId) {
+      const pathKey = currentPath.join(' > ');
+      const currentFiles = folderStructure[pathKey] || [];
+      
+      // Проверить, существует ли файл/папка с таким именем
+      const existingItem = currentFiles.find(f => f.name === renameValue.trim() && f.id !== renamingItemId);
+      if (existingItem) {
+        toast.error(`Элемент "${renameValue.trim()}" уже существует в этой папке`);
+        return;
+      }
+      
+      setFolderStructure({
+        ...folderStructure,
+        [pathKey]: currentFiles.map(f => 
+          f.id === renamingItemId ? { ...f, name: renameValue.trim() } : f
+        )
+      });
+      
+      setRenameDialogOpen(false);
+      setRenamingItemId(null);
+      setRenameValue('');
+      toast.success('Элемент переименован');
     }
   };
 
@@ -214,17 +249,30 @@ const Explorer = () => {
                     {file.type === 'folder' ? 'Папка с файлами' : file.size} • {file.modified}
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 opacity-0 group-hover:opacity-100"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDelete(file.id);
-                  }}
-                >
-                  <Icon name="Trash2" size={16} />
-                </Button>
+                <div className="flex gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 opacity-0 group-hover:opacity-100"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRename(file.id, file.name);
+                    }}
+                  >
+                    <Icon name="Pencil" size={16} />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 opacity-0 group-hover:opacity-100"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(file.id);
+                    }}
+                  >
+                    <Icon name="Trash2" size={16} />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
@@ -250,6 +298,27 @@ const Explorer = () => {
               Отмена
             </Button>
             <Button onClick={handleCreateConfirm}>Создать</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+        <DialogContent className="z-[10000]">
+          <DialogHeader>
+            <DialogTitle>Переименовать</DialogTitle>
+          </DialogHeader>
+          <Input
+            placeholder="Введите новое имя..."
+            value={renameValue}
+            onChange={(e) => setRenameValue(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleRenameConfirm()}
+            autoFocus
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRenameDialogOpen(false)}>
+              Отмена
+            </Button>
+            <Button onClick={handleRenameConfirm}>Переименовать</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
