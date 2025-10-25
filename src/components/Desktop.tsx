@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Icon from '@/components/ui/icon';
 import { FileItem } from '@/pages/Index';
 import {
@@ -45,9 +45,12 @@ const Desktop = ({
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [renamingFileId, setRenamingFileId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
+  const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
+  const [copiedFileId, setCopiedFileId] = useState<string | null>(null);
 
   const handleMouseDown = (e: React.MouseEvent, file: FileItem) => {
     if (e.button !== 0) return;
+    setSelectedFileId(file.id);
     setDraggingFile(file.id);
     setDragOffset({
       x: e.clientX - (file.x || 0),
@@ -155,6 +158,24 @@ const Desktop = ({
     }
   };
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === 'c' && selectedFileId) {
+        e.preventDefault();
+        setCopiedFileId(selectedFileId);
+        toast.success('Файл скопирован в буфер обмена');
+      }
+      
+      if (e.ctrlKey && e.key === 'v' && copiedFileId) {
+        e.preventDefault();
+        handleCopy(copiedFileId);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedFileId, copiedFileId]);
+
   const getDisplayName = (name: string) => {
     const translations: { [key: string]: string } = {
       'Browser': 'Браузер',
@@ -176,12 +197,19 @@ const Desktop = ({
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setSelectedFileId(null);
+              }
+            }}
           >
             {files.map((file) => (
               <ContextMenu key={file.id}>
                 <ContextMenuTrigger asChild>
                   <div
-                    className="absolute flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/10 cursor-pointer select-none transition-colors group"
+                    className={`absolute flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/10 cursor-pointer select-none transition-colors group ${
+                      selectedFileId === file.id ? 'bg-white/20 ring-2 ring-white/40' : ''
+                    }`}
                     style={{ left: file.x, top: file.y }}
                     onMouseDown={(e) => handleMouseDown(e, file)}
                     onDoubleClick={() => onFileDoubleClick(file.name)}

@@ -22,12 +22,62 @@ const Notepad = ({ fileId, fileName: initialFileName = 'Новый докуме�
   const [isUnderline, setIsUnderline] = useState(false);
   const [saveAsDialogOpen, setSaveAsDialogOpen] = useState(false);
   const [newFileName, setNewFileName] = useState('');
+  const [history, setHistory] = useState<string[]>([initialContent]);
+  const [historyIndex, setHistoryIndex] = useState(0);
 
   useEffect(() => {
     setContent(initialContent);
     setFileName(initialFileName);
     setCurrentFileId(fileId);
+    setHistory([initialContent]);
+    setHistoryIndex(0);
   }, [initialContent, initialFileName, fileId]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === 's') {
+        e.preventDefault();
+        handleSave();
+      }
+      if (e.ctrlKey && e.key === 'z') {
+        e.preventDefault();
+        handleUndo();
+      }
+      if (e.ctrlKey && e.key === 'y') {
+        e.preventDefault();
+        handleRedo();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [content, historyIndex, history]);
+
+  const handleContentChange = (newContent: string) => {
+    setContent(newContent);
+    const newHistory = history.slice(0, historyIndex + 1);
+    newHistory.push(newContent);
+    if (newHistory.length > 50) {
+      newHistory.shift();
+    } else {
+      setHistoryIndex(historyIndex + 1);
+    }
+    setHistory(newHistory);
+  };
+
+  const handleUndo = () => {
+    if (historyIndex > 0) {
+      setHistoryIndex(historyIndex - 1);
+      setContent(history[historyIndex - 1]);
+    }
+  };
+
+  const handleRedo = () => {
+    if (historyIndex < history.length - 1) {
+      setHistoryIndex(historyIndex + 1);
+      setContent(history[historyIndex + 1]);
+    }
+  };
 
   const handleSave = () => {
     if (!currentFileId) {
@@ -110,6 +160,27 @@ const Notepad = ({ fileId, fileName: initialFileName = 'Новый докуме�
         <div className="w-px h-6 bg-border mx-2" />
 
         <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={handleUndo}
+          disabled={historyIndex <= 0}
+        >
+          <Icon name="Undo" size={16} />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={handleRedo}
+          disabled={historyIndex >= history.length - 1}
+        >
+          <Icon name="Redo" size={16} />
+        </Button>
+
+        <div className="w-px h-6 bg-border mx-2" />
+
+        <Button
           variant={isBold ? 'secondary' : 'ghost'}
           size="icon"
           className="h-8 w-8"
@@ -137,7 +208,7 @@ const Notepad = ({ fileId, fileName: initialFileName = 'Новый докуме�
 
       <Textarea
         value={content}
-        onChange={(e) => setContent(e.target.value)}
+        onChange={(e) => handleContentChange(e.target.value)}
         placeholder="Начните печатать..."
         className={`flex-1 border-0 rounded-none focus-visible:ring-0 resize-none p-4 font-mono ${
           isBold ? 'font-bold' : ''
