@@ -44,6 +44,7 @@ const Window = ({
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
   const windowRef = useRef<HTMLDivElement>(null);
 
   const getDisplayTitle = (title: string) => {
@@ -109,6 +110,30 @@ const Window = ({
     setIsResizing(true);
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if ((e.target as HTMLElement).closest('button')) return;
+    const touch = e.touches[0];
+    const rect = windowRef.current?.getBoundingClientRect();
+    if (rect) {
+      setTouchStart({ x: touch.clientX, y: touch.clientY });
+      setDragOffset({
+        x: touch.clientX - rect.left,
+        y: touch.clientY - rect.top,
+      });
+    }
+    onFocus();
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStart || isMaximized) return;
+    const touch = e.touches[0];
+    onPositionChange(touch.clientX - dragOffset.x, touch.clientY - dragOffset.y);
+  };
+
+  const handleTouchEnd = () => {
+    setTouchStart(null);
+  };
+
   const style = isMaximized
     ? { left: 0, top: 0, width: '100vw', height: 'calc(100vh - 48px)' }
     : { left: x, top: y, width, height };
@@ -132,8 +157,11 @@ const Window = ({
       onMouseDown={onFocus}
     >
       <div
-        className="h-10 bg-card/50 backdrop-blur-sm border-b border-border flex items-center justify-between px-4 cursor-move select-none rounded-t-xl"
+        className="h-10 bg-card/50 backdrop-blur-sm border-b border-border flex items-center justify-between px-4 cursor-move select-none rounded-t-xl touch-none"
         onMouseDown={handleTitleBarMouseDown}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
         onDoubleClick={onMaximize}
       >
         <div className="flex items-center gap-2">

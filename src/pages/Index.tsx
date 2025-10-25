@@ -44,6 +44,18 @@ const Index = () => {
   const [nextZIndex, setNextZIndex] = useState(100);
   const [globalVolume, setGlobalVolume] = useState(50);
   const [globalMuted, setGlobalMuted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('windows-theme') as 'light' | 'dark' | null;
@@ -184,11 +196,11 @@ const Index = () => {
       icon,
       component,
       isMinimized: false,
-      isMaximized: false,
-      x: 100 + windows.length * 30,
-      y: 50 + windows.length * 30,
-      width,
-      height,
+      isMaximized: isMobile,
+      x: isMobile ? 0 : 100 + windows.length * 30,
+      y: isMobile ? 0 : 50 + windows.length * 30,
+      width: isMobile ? window.innerWidth : width,
+      height: isMobile ? window.innerHeight - 48 : height,
       zIndex: nextZIndex,
     };
 

@@ -114,4 +114,21 @@
   .taskbar-shadow {
     box-shadow: 0 -2px 8px 0 rgba(0, 0, 0, 0.05);
   }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  @media (max-width: 768px) {
+    .touch-none {
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+  }
 }

@@ -74,50 +74,52 @@ const Taskbar = ({
       <Button
         variant="ghost"
         size="icon"
-        className="h-10 w-10 hover:bg-white/10"
+        className="h-10 w-10 hover:bg-white/10 flex-shrink-0"
         onClick={onStartClick}
       >
         <Icon name="Grid3x3" size={20} className="text-primary" />
       </Button>
 
-      <div className="h-8 w-px bg-border/50" />
+      <div className="h-8 w-px bg-border/50 hidden sm:block" />
 
-      <div className="flex gap-1 flex-1 overflow-x-auto">
+      <div className="flex gap-1 flex-1 overflow-x-auto scrollbar-hide">
         {windows.map((window) => (
           <Button
             key={window.id}
             variant="ghost"
-            className={`h-10 px-4 flex items-center gap-2 hover:bg-white/10 transition-all ${
+            className={`h-10 px-2 sm:px-4 flex items-center gap-2 hover:bg-white/10 transition-all flex-shrink-0 ${
               window.isMinimized ? 'opacity-50' : ''
             }`}
             onClick={() => onWindowClick(window.id)}
           >
             <Icon name={window.icon} size={16} />
-            <span className="text-sm max-w-[150px] truncate">{getWindowTitle(window.title)}</span>
+            <span className="text-sm max-w-[80px] sm:max-w-[150px] truncate hidden sm:inline">{getWindowTitle(window.title)}</span>
           </Button>
         ))}
       </div>
 
-      <div className="flex items-center gap-3 px-3">
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/10">
-              <Icon name="Wifi" size={16} />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-64 z-[10001]">
-            <div className="space-y-3">
-              <h4 className="font-medium">Сетевые подключения</h4>
-              <div className="flex items-center gap-3 p-2 rounded hover:bg-accent">
-                <Icon name="Wifi" size={20} className="text-primary" />
-                <div className="flex-1">
-                  <div className="font-medium">Wi-Fi</div>
-                  <div className="text-xs text-muted-foreground">Подключено</div>
+      <div className="flex items-center gap-1 sm:gap-3 px-1 sm:px-3 flex-shrink-0">
+        <div className="hidden md:block">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/10">
+                <Icon name="Wifi" size={16} />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 z-[10001]">
+              <div className="space-y-3">
+                <h4 className="font-medium">Сетевые подключения</h4>
+                <div className="flex items-center gap-3 p-2 rounded hover:bg-accent">
+                  <Icon name="Wifi" size={20} className="text-primary" />
+                  <div className="flex-1">
+                    <div className="font-medium">Wi-Fi</div>
+                    <div className="text-xs text-muted-foreground">Подключено</div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </PopoverContent>
-        </Popover>
+            </PopoverContent>
+          </Popover>
+        </div>
         
         <Popover>
           <PopoverTrigger asChild>
@@ -155,38 +157,40 @@ const Taskbar = ({
           </PopoverContent>
         </Popover>
 
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/10">
-              <Icon name="Sun" size={16} />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-64 z-[10001]">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="font-medium">Яркость</h4>
-                <span className="text-sm text-muted-foreground">{brightness}%</span>
-              </div>
-              <div className="flex items-center gap-3">
+        <div className="hidden md:block">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/10">
                 <Icon name="Sun" size={16} />
-                <Slider
-                  value={[brightness]}
-                  onValueChange={(value) => {
-                    setBrightness(value[0]);
-                    document.documentElement.style.filter = `brightness(${value[0]}%)`;
-                  }}
-                  max={100}
-                  step={1}
-                  className="flex-1"
-                />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 z-[10001]">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium">Яркость</h4>
+                  <span className="text-sm text-muted-foreground">{brightness}%</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Icon name="Sun" size={16} />
+                  <Slider
+                    value={[brightness]}
+                    onValueChange={(value) => {
+                      setBrightness(value[0]);
+                      document.documentElement.style.filter = `brightness(${value[0]}%)`;
+                    }}
+                    max={100}
+                    step={1}
+                    className="flex-1"
+                  />
+                </div>
               </div>
-            </div>
-          </PopoverContent>
-        </Popover>
+            </PopoverContent>
+          </Popover>
+        </div>
 
-        <div className="text-xs text-right">
+        <div className="text-xs text-right hidden sm:block">
           <div className="font-medium">{timeString}</div>
-          <div className="text-muted-foreground">{dateString}</div>
+          <div className="text-muted-foreground hidden md:block">{dateString}</div>
         </div>
       </div>
     </div>

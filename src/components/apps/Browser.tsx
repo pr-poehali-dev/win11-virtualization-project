@@ -10,12 +10,18 @@ interface BrowserTab {
   isLoading: boolean;
 }
 
+interface DragState {
+  draggedTabId: string | null;
+  dragOverTabId: string | null;
+}
+
 const Browser = () => {
   const [tabs, setTabs] = useState<BrowserTab[]>([
     { id: 'tab-1', title: 'Google', url: 'https://www.google.com', isLoading: false }
   ]);
   const [activeTabId, setActiveTabId] = useState('tab-1');
   const [inputUrl, setInputUrl] = useState('https://www.google.com');
+  const [dragState, setDragState] = useState<DragState>({ draggedTabId: null, dragOverTabId: null });
   const iframeRefs = useRef<{ [key: string]: HTMLIFrameElement | null }>({});
 
   const activeTab = tabs.find(t => t.id === activeTabId);
@@ -49,6 +55,42 @@ const Browser = () => {
       const newActiveTab = newTabs[Math.max(0, tabIndex - 1)];
       setActiveTabId(newActiveTab.id);
     }
+  };
+
+  const handleTabDragStart = (tabId: string, e: React.DragEvent) => {
+    setDragState({ draggedTabId: tabId, dragOverTabId: null });
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleTabDragOver = (tabId: string, e: React.DragEvent) => {
+    e.preventDefault();
+    if (dragState.draggedTabId && dragState.draggedTabId !== tabId) {
+      setDragState(prev => ({ ...prev, dragOverTabId: tabId }));
+    }
+  };
+
+  const handleTabDrop = (targetTabId: string, e: React.DragEvent) => {
+    e.preventDefault();
+    const { draggedTabId } = dragState;
+    
+    if (!draggedTabId || draggedTabId === targetTabId) {
+      setDragState({ draggedTabId: null, dragOverTabId: null });
+      return;
+    }
+
+    const draggedIndex = tabs.findIndex(t => t.id === draggedTabId);
+    const targetIndex = tabs.findIndex(t => t.id === targetTabId);
+    
+    const newTabs = [...tabs];
+    const [draggedTab] = newTabs.splice(draggedIndex, 1);
+    newTabs.splice(targetIndex, 0, draggedTab);
+    
+    setTabs(newTabs);
+    setDragState({ draggedTabId: null, dragOverTabId: null });
+  };
+
+  const handleTabDragEnd = () => {
+    setDragState({ draggedTabId: null, dragOverTabId: null });
   };
 
   const handleNavigate = () => {
@@ -121,9 +163,16 @@ const Browser = () => {
         {tabs.map(tab => (
           <div
             key={tab.id}
+            draggable
             onClick={() => setActiveTabId(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2 border-r border-border cursor-pointer hover:bg-secondary/80 transition-colors min-w-[150px] max-w-[200px] ${
+            onDragStart={(e) => handleTabDragStart(tab.id, e)}
+            onDragOver={(e) => handleTabDragOver(tab.id, e)}
+            onDrop={(e) => handleTabDrop(tab.id, e)}
+            onDragEnd={handleTabDragEnd}
+            className={`flex items-center gap-2 px-4 py-2 border-r border-border cursor-move hover:bg-secondary/80 transition-colors min-w-[150px] max-w-[200px] ${
               activeTabId === tab.id ? 'bg-background' : ''
+            } ${dragState.draggedTabId === tab.id ? 'opacity-50' : ''} ${
+              dragState.dragOverTabId === tab.id ? 'border-l-2 border-l-primary' : ''
             }`}
           >
             {tab.isLoading ? (

@@ -47,6 +47,7 @@ const Desktop = ({
   const [renameValue, setRenameValue] = useState('');
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
   const [copiedFileId, setCopiedFileId] = useState<string | null>(null);
+  const [lastTap, setLastTap] = useState<{ time: number; fileId: string } | null>(null);
 
   const handleMouseDown = (e: React.MouseEvent, file: FileItem) => {
     if (e.button !== 0) return;
@@ -56,6 +57,55 @@ const Desktop = ({
       x: e.clientX - (file.x || 0),
       y: e.clientY - (file.y || 0),
     });
+  };
+
+  const handleTouchStart = (e: React.TouchEvent, file: FileItem) => {
+    const now = Date.now();
+    const touch = e.touches[0];
+    
+    // Проверяем двойное касание
+    if (lastTap && now - lastTap.time < 300 && lastTap.fileId === file.id) {
+      onFileDoubleClick(file.name);
+      setLastTap(null);
+      return;
+    }
+    
+    setLastTap({ time: now, fileId: file.id });
+    setSelectedFileId(file.id);
+    setDraggingFile(file.id);
+    setDragOffset({
+      x: touch.clientX - (file.x || 0),
+      y: touch.clientY - (file.y || 0),
+    });
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!draggingFile) return;
+    const touch = e.touches[0];
+    const newX = touch.clientX - dragOffset.x;
+    const newY = touch.clientY - dragOffset.y;
+    onFilePositionChange(draggingFile, newX, newY);
+  };
+
+  const handleTouchEnd = () => {
+    if (draggingFile) {
+      const file = files.find(f => f.id === draggingFile);
+      if (file) {
+        let snappedX = snapToGrid(file.x || 0);
+        let snappedY = snapToGrid(file.y || 0);
+        
+        while (isPositionOccupied(snappedX, snappedY, file.id)) {
+          snappedY += GRID_SIZE;
+          if (snappedY > window.innerHeight - 100) {
+            snappedY = 0;
+            snappedX += GRID_SIZE;
+          }
+        }
+        
+        onFilePositionChange(draggingFile, snappedX, snappedY);
+      }
+      setDraggingFile(null);
+    }
   };
 
   const GRID_SIZE = 100;
@@ -197,6 +247,8 @@ const Desktop = ({
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
             onClick={(e) => {
               if (e.target === e.currentTarget) {
                 setSelectedFileId(null);
@@ -207,11 +259,16 @@ const Desktop = ({
               <ContextMenu key={file.id}>
                 <ContextMenuTrigger asChild>
                   <div
-                    className={`absolute flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/10 cursor-pointer select-none transition-colors group ${
+                    className={`absolute flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/10 active:bg-white/20 cursor-pointer select-none transition-colors group touch-none ${
                       selectedFileId === file.id ? 'bg-white/20 ring-2 ring-white/40' : ''
                     }`}
-                    style={{ left: file.x, top: file.y }}
+                    style={{ 
+                      left: file.x, 
+                      top: file.y,
+                      WebkitTapHighlightColor: 'transparent'
+                    }}
                     onMouseDown={(e) => handleMouseDown(e, file)}
+                    onTouchStart={(e) => handleTouchStart(e, file)}
                     onDoubleClick={() => onFileDoubleClick(file.name)}
                   >
                     <div className="w-12 h-12 flex items-center justify-center text-white">
