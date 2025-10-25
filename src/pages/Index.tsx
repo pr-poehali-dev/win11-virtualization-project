@@ -7,6 +7,7 @@ import Browser from '@/components/apps/Browser';
 import Notepad from '@/components/apps/Notepad';
 import Settings from '@/components/apps/Settings';
 import Explorer from '@/components/apps/Explorer';
+import Calculator from '@/components/apps/Calculator';
 
 export interface FileItem {
   id: string;
@@ -54,7 +55,7 @@ const Index = () => {
       const defaultFiles: FileItem[] = [
         { id: '1', name: 'Browser', type: 'file', x: 50, y: 50 },
         { id: '2', name: 'Notepad', type: 'file', x: 50, y: 150 },
-        { id: '3', name: 'Settings', type: 'file', x: 50, y: 250 },
+        { id: '3', name: 'Calculator', type: 'file', x: 50, y: 250 },
         { id: '4', name: 'Explorer', type: 'file', x: 50, y: 350 },
       ];
       setFiles(defaultFiles);
@@ -70,6 +71,13 @@ const Index = () => {
     setTheme(newTheme);
     document.documentElement.classList.toggle('dark', newTheme === 'dark');
     localStorage.setItem('windows-theme', newTheme);
+    
+    // Update Settings window if it's open
+    setWindows(windows.map(w => 
+      w.title === 'Settings' 
+        ? { ...w, component: <Settings theme={newTheme} onThemeChange={toggleTheme} /> }
+        : w
+    ));
   };
 
   const openApp = (appName: string) => {
@@ -97,6 +105,12 @@ const Index = () => {
         width = 700;
         height = 500;
         break;
+      case 'Calculator':
+        component = <Calculator />;
+        icon = 'Calculator';
+        width = 400;
+        height = 600;
+        break;
       case 'Settings':
         component = <Settings theme={theme} onThemeChange={toggleTheme} />;
         icon = 'Settings';
@@ -111,7 +125,19 @@ const Index = () => {
         height = 650;
         break;
       default:
-        return;
+        if (files.find(f => f.name === appName && f.type === 'folder')) {
+          component = <Explorer />;
+          icon = 'FolderOpen';
+          width = 900;
+          height = 650;
+        } else if (files.find(f => f.name === appName && f.type === 'file')) {
+          component = <Notepad />;
+          icon = 'FileText';
+          width = 700;
+          height = 500;
+        } else {
+          return;
+        }
     }
 
     const newWindow: AppWindow = {
@@ -210,30 +236,37 @@ const Index = () => {
         onDeleteFile={deleteFile}
       />
       
-      {windows.map(window => (
-        !window.isMinimized && (
-          <Window
-            key={window.id}
-            id={window.id}
-            title={window.title}
-            icon={window.icon}
-            isMaximized={window.isMaximized}
-            x={window.x}
-            y={window.y}
-            width={window.width}
-            height={window.height}
-            zIndex={window.zIndex}
-            onClose={() => closeWindow(window.id)}
-            onMinimize={() => minimizeWindow(window.id)}
-            onMaximize={() => maximizeWindow(window.id)}
-            onFocus={() => focusWindow(window.id)}
-            onPositionChange={(x, y) => updateWindowPosition(window.id, x, y)}
-            onSizeChange={(width, height) => updateWindowSize(window.id, width, height)}
-          >
-            {window.component}
-          </Window>
-        )
-      ))}
+      {windows.map(window => {
+        // Always use current theme for Settings window
+        const component = window.title === 'Settings'
+          ? <Settings theme={theme} onThemeChange={toggleTheme} />
+          : window.component;
+          
+        return (
+          !window.isMinimized && (
+            <Window
+              key={window.id}
+              id={window.id}
+              title={window.title}
+              icon={window.icon}
+              isMaximized={window.isMaximized}
+              x={window.x}
+              y={window.y}
+              width={window.width}
+              height={window.height}
+              zIndex={window.zIndex}
+              onClose={() => closeWindow(window.id)}
+              onMinimize={() => minimizeWindow(window.id)}
+              onMaximize={() => maximizeWindow(window.id)}
+              onFocus={() => focusWindow(window.id)}
+              onPositionChange={(x, y) => updateWindowPosition(window.id, x, y)}
+              onSizeChange={(width, height) => updateWindowSize(window.id, width, height)}
+            >
+              {component}
+            </Window>
+          )
+        );
+      })}
 
       <Taskbar
         windows={windows}

@@ -39,6 +39,7 @@ const Taskbar = ({ windows, onStartClick, onWindowClick }: TaskbarProps) => {
     const translations: { [key: string]: string } = {
       'Browser': 'Браузер',
       'Notepad': 'Блокнот',
+      'Calculator': 'Калькулятор',
       'Settings': 'Настройки',
       'Explorer': 'Проводник',
       'Documents': 'Проводник'

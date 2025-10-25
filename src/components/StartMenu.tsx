@@ -10,6 +10,7 @@ interface StartMenuProps {
 const apps = [
   { name: 'Browser', displayName: 'Браузер', icon: 'Globe', color: 'bg-blue-500' },
   { name: 'Notepad', displayName: 'Блокнот', icon: 'FileText', color: 'bg-yellow-500' },
+  { name: 'Calculator', displayName: 'Калькулятор', icon: 'Calculator', color: 'bg-purple-500' },
   { name: 'Explorer', displayName: 'Проводник', icon: 'FolderOpen', color: 'bg-orange-500' },
   { name: 'Settings', displayName: 'Настройки', icon: 'Settings', color: 'bg-gray-500' },
 ];

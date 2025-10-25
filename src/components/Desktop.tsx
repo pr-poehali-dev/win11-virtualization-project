@@ -90,6 +90,7 @@ const Desktop = ({
     const translations: { [key: string]: string } = {
       'Browser': 'Браузер',
       'Notepad': 'Блокнот',
+      'Calculator': 'Калькулятор',
       'Settings': 'Настройки',
       'Documents': 'Документы',
       'Explorer': 'Проводник'
@@ -183,6 +184,7 @@ const Desktop = ({
 const getFileIcon = (name: string): string => {
   if (name === 'Browser') return 'Globe';
   if (name === 'Notepad') return 'FileText';
+  if (name === 'Calculator') return 'Calculator';
   if (name === 'Settings') return 'Settings';
   if (name === 'Explorer') return 'FolderOpen';
   return 'File';
