@@ -7,6 +7,7 @@ interface WindowProps {
   title: string;
   icon: string;
   children: React.ReactNode;
+  isMinimized: boolean;
   isMaximized: boolean;
   x: number;
   y: number;
@@ -26,6 +27,7 @@ const Window = ({
   title,
   icon,
   children,
+  isMinimized,
   isMaximized,
   x,
   y,
@@ -88,6 +90,8 @@ const Window = ({
 
   const handleTitleBarMouseDown = (e: React.MouseEvent) => {
     if (e.button !== 0) return;
+    // Не начинаем перетаскивание если кликнули на кнопку
+    if ((e.target as HTMLElement).closest('button')) return;
     onFocus();
     setIsDragging(true);
     const rect = windowRef.current?.getBoundingClientRect();
@@ -108,6 +112,15 @@ const Window = ({
   const style = isMaximized
     ? { left: 0, top: 0, width: '100vw', height: 'calc(100vh - 48px)' }
     : { left: x, top: y, width, height };
+
+  // Скрываем окно через CSS если оно свернуто, но не удаляем из DOM
+  if (isMinimized) {
+    return (
+      <div style={{ display: 'none' }}>
+        {children}
+      </div>
+    );
+  }
 
   return (
     <div
@@ -132,7 +145,10 @@ const Window = ({
             variant="ghost"
             size="icon"
             className="h-8 w-8 hover:bg-accent/50"
-            onClick={onMinimize}
+            onClick={(e) => {
+              e.stopPropagation();
+              onMinimize();
+            }}
           >
             <Icon name="Minus" size={14} />
           </Button>
@@ -140,7 +156,10 @@ const Window = ({
             variant="ghost"
             size="icon"
             className="h-8 w-8 hover:bg-accent/50"
-            onClick={onMaximize}
+            onClick={(e) => {
+              e.stopPropagation();
+              onMaximize();
+            }}
           >
             <Icon name={isMaximized ? 'Minimize2' : 'Square'} size={14} />
           </Button>
@@ -148,7 +167,10 @@ const Window = ({
             variant="ghost"
             size="icon"
             className="h-8 w-8 hover:bg-destructive hover:text-destructive-foreground"
-            onClick={onClose}
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
           >
             <Icon name="X" size={14} />
           </Button>

@@ -419,28 +419,27 @@ const Index = () => {
         }
           
         return (
-          !window.isMinimized && (
-            <Window
-              key={window.id}
-              id={window.id}
-              title={window.title}
-              icon={window.icon}
-              isMaximized={window.isMaximized}
-              x={window.x}
-              y={window.y}
-              width={window.width}
-              height={window.height}
-              zIndex={window.zIndex}
-              onClose={() => closeWindow(window.id)}
-              onMinimize={() => minimizeWindow(window.id)}
-              onMaximize={() => maximizeWindow(window.id)}
-              onFocus={() => focusWindow(window.id)}
-              onPositionChange={(x, y) => updateWindowPosition(window.id, x, y)}
-              onSizeChange={(width, height) => updateWindowSize(window.id, width, height)}
-            >
-              {component}
-            </Window>
-          )
+          <Window
+            key={window.id}
+            id={window.id}
+            title={window.title}
+            icon={window.icon}
+            isMinimized={window.isMinimized}
+            isMaximized={window.isMaximized}
+            x={window.x}
+            y={window.y}
+            width={window.width}
+            height={window.height}
+            zIndex={window.zIndex}
+            onClose={() => closeWindow(window.id)}
+            onMinimize={() => minimizeWindow(window.id)}
+            onMaximize={() => maximizeWindow(window.id)}
+            onFocus={() => focusWindow(window.id)}
+            onPositionChange={(x, y) => updateWindowPosition(window.id, x, y)}
+            onSizeChange={(width, height) => updateWindowSize(window.id, width, height)}
+          >
+            {component}
+          </Window>
         );
       })}
 
