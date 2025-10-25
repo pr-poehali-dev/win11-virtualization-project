@@ -114,7 +114,7 @@ const Index = () => {
           <Notepad 
             fileName='Новый документ'
             initialContent=''
-            onSave={(content, fileName, fileId) => saveFileContent(content, fileName, fileId)}
+            onSave={saveFileContent}
           />
         );
         icon = 'FileText';
@@ -219,7 +219,13 @@ const Index = () => {
     ));
   };
 
-  const createNewFile = (name: string, type: 'file' | 'folder') => {
+  const createNewFile = (name: string, type: 'file' | 'folder'): { success: boolean; error?: string } => {
+    // Проверить, существует ли файл/папка с таким именем
+    const existingFile = files.find(f => f.name === name);
+    if (existingFile) {
+      return { success: false, error: `${type === 'folder' ? 'Папка' : 'Файл'} "${name}" уже существует` };
+    }
+    
     const newFile: FileItem = {
       id: `file-${Date.now()}`,
       name,
@@ -230,10 +236,24 @@ const Index = () => {
       y: 50 + files.length * 100,
     };
     setFiles([...files, newFile]);
+    return { success: true };
   };
 
   const deleteFile = (id: string) => {
     setFiles(files.filter(f => f.id !== id));
+  };
+
+  const renameFile = (id: string, newName: string): { success: boolean; error?: string } => {
+    // Проверить, существует ли файл/папка с таким именем
+    const existingFile = files.find(f => f.name === newName && f.id !== id);
+    if (existingFile) {
+      return { success: false, error: `Файл или папка "${newName}" уже существует` };
+    }
+    
+    setFiles(files.map(f => 
+      f.id === id ? { ...f, name: newName } : f
+    ));
+    return { success: true };
   };
 
   const updateFilePosition = (id: string, x: number, y: number) => {
@@ -242,23 +262,33 @@ const Index = () => {
     ));
   };
 
-  const saveFileContent = (content: string, fileName: string, fileId?: string) => {
+  const saveFileContent = (content: string, fileName: string, fileId?: string): { success: boolean; error?: string } => {
+    const finalFileName = fileName.endsWith('.txt') ? fileName : `${fileName}.txt`;
+    
     if (fileId) {
       // Сохранить в существующий файл
       setFiles(files.map(f => 
         f.id === fileId ? { ...f, content } : f
       ));
+      return { success: true };
     } else {
+      // Проверить, существует ли файл с таким именем
+      const existingFile = files.find(f => f.name === finalFileName);
+      if (existingFile) {
+        return { success: false, error: `Файл "${finalFileName}" уже существует на этом ПК` };
+      }
+      
       // Создать новый файл
       const newFile: FileItem = {
         id: `file-${Date.now()}`,
-        name: fileName.endsWith('.txt') ? fileName : `${fileName}.txt`,
+        name: finalFileName,
         type: 'file',
         content,
         x: 50,
         y: 50 + files.length * 100,
       };
       setFiles([...files, newFile]);
+      return { success: true };
     }
   };
 
@@ -270,7 +300,7 @@ const Index = () => {
           fileId={file.id}
           fileName={file.name}
           initialContent={file.content || ''}
-          onSave={(content, fileName, fileId) => saveFileContent(content, fileName, fileId)}
+          onSave={saveFileContent}
         />
       );
       
@@ -302,6 +332,7 @@ const Index = () => {
         onFilePositionChange={updateFilePosition}
         onCreateFile={createNewFile}
         onDeleteFile={deleteFile}
+        onRenameFile={renameFile}
       />
       
       {windows.map(window => {
@@ -321,7 +352,7 @@ const Index = () => {
                 fileId={file.id}
                 fileName={file.name}
                 initialContent={file.content || ''}
-                onSave={(content, fileName, fileId) => saveFileContent(content, fileName, fileId)}
+                onSave={saveFileContent}
               />
             );
           }

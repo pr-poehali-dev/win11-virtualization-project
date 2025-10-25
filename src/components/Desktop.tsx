@@ -16,13 +16,15 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 interface DesktopProps {
   files: FileItem[];
   onFileDoubleClick: (name: string) => void;
   onFilePositionChange: (id: string, x: number, y: number) => void;
-  onCreateFile: (name: string, type: 'file' | 'folder') => void;
+  onCreateFile: (name: string, type: 'file' | 'folder') => { success: boolean; error?: string };
   onDeleteFile: (id: string) => void;
+  onRenameFile: (id: string, newName: string) => { success: boolean; error?: string };
 }
 
 const Desktop = ({
@@ -31,12 +33,16 @@ const Desktop = ({
   onFilePositionChange,
   onCreateFile,
   onDeleteFile,
+  onRenameFile,
 }: DesktopProps) => {
   const [draggingFile, setDraggingFile] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [newItemName, setNewItemName] = useState('');
   const [newItemType, setNewItemType] = useState<'file' | 'folder'>('file');
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [renamingFileId, setRenamingFileId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
 
   const handleMouseDown = (e: React.MouseEvent, file: FileItem) => {
     if (e.button !== 0) return;
@@ -95,9 +101,37 @@ const Desktop = ({
 
   const handleCreateConfirm = () => {
     if (newItemName.trim()) {
-      onCreateFile(newItemName, newItemType);
-      setCreateDialogOpen(false);
-      setNewItemName('');
+      const result = onCreateFile(newItemName, newItemType);
+      if (result.success) {
+        setCreateDialogOpen(false);
+        setNewItemName('');
+      } else {
+        toast.error(result.error || 'Ошибка создания');
+      }
+    }
+  };
+
+  const handleRename = (file: FileItem) => {
+    setRenamingFileId(file.id);
+    setRenameValue(file.name.replace('.txt', ''));
+    setRenameDialogOpen(true);
+  };
+
+  const handleRenameConfirm = () => {
+    if (renameValue.trim() && renamingFileId) {
+      const file = files.find(f => f.id === renamingFileId);
+      const finalName = file?.type === 'file' && !renameValue.endsWith('.txt') 
+        ? `${renameValue}.txt` 
+        : renameValue;
+      
+      const result = onRenameFile(renamingFileId, finalName);
+      if (result.success) {
+        setRenameDialogOpen(false);
+        setRenamingFileId(null);
+        setRenameValue('');
+      } else {
+        toast.error(result.error || 'Ошибка переименования');
+      }
     }
   };
 
@@ -144,10 +178,14 @@ const Desktop = ({
                     </span>
                   </div>
                 </ContextMenuTrigger>
-                <ContextMenuContent>
+                <ContextMenuContent className="z-[10000]">
                   <ContextMenuItem onClick={() => onFileDoubleClick(file.name)}>
                     <Icon name="FolderOpen" className="mr-2" size={16} />
                     Открыть
+                  </ContextMenuItem>
+                  <ContextMenuItem onClick={() => handleRename(file)}>
+                    <Icon name="Edit" className="mr-2" size={16} />
+                    Переименовать
                   </ContextMenuItem>
                   <ContextMenuItem onClick={() => onDeleteFile(file.id)}>
                     <Icon name="Trash2" className="mr-2" size={16} />
@@ -189,6 +227,27 @@ const Desktop = ({
               Отмена
             </Button>
             <Button onClick={handleCreateConfirm}>Создать</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+        <DialogContent className="z-[10000]">
+          <DialogHeader>
+            <DialogTitle>Переименовать</DialogTitle>
+          </DialogHeader>
+          <Input
+            placeholder="Введите новое имя..."
+            value={renameValue}
+            onChange={(e) => setRenameValue(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleRenameConfirm()}
+            autoFocus
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRenameDialogOpen(false)}>
+              Отмена
+            </Button>
+            <Button onClick={handleRenameConfirm}>Переименовать</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -10,7 +10,7 @@ interface NotepadProps {
   fileId?: string;
   fileName?: string;
   initialContent?: string;
-  onSave: (content: string, fileName: string, fileId?: string) => void;
+  onSave: (content: string, fileName: string, fileId?: string) => { success: boolean; error?: string };
 }
 
 const Notepad = ({ fileId, fileName: initialFileName = 'Новый документ', initialContent = '', onSave }: NotepadProps) => {
@@ -35,23 +35,33 @@ const Notepad = ({ fileId, fileName: initialFileName = 'Новый докуме�
       return;
     }
     
-    onSave(content, fileName, currentFileId);
-    toast.success('Файл сохранен!');
+    const result = onSave(content, fileName, currentFileId);
+    if (result.success) {
+      toast.success('Файл сохранен!');
+    } else {
+      toast.error(result.error || 'Ошибка сохранения');
+    }
   };
 
   const handleSaveAs = () => {
-    setNewFileName(fileName);
+    setNewFileName(fileName.replace('.txt', ''));
     setSaveAsDialogOpen(true);
   };
 
   const handleSaveAsConfirm = () => {
     if (newFileName.trim()) {
       const finalFileName = newFileName.endsWith('.txt') ? newFileName : `${newFileName}.txt`;
-      onSave(content, finalFileName, undefined); // undefined означает создание нового файла
-      setFileName(finalFileName);
-      setCurrentFileId(`file-${Date.now()}`);
-      setSaveAsDialogOpen(false);
-      toast.success('Файл сохранен как ' + finalFileName);
+      const result = onSave(content, finalFileName, undefined); // undefined означает создание нового файла
+      
+      if (result.success) {
+        setFileName(finalFileName);
+        setCurrentFileId(`file-${Date.now()}`);
+        setSaveAsDialogOpen(false);
+        toast.success('Файл сохранен как ' + finalFileName);
+      } else {
+        setSaveAsDialogOpen(false);
+        toast.error(result.error || 'Ошибка сохранения');
+      }
     }
   };
 
