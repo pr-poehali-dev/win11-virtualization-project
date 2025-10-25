@@ -165,7 +165,7 @@ const Index = () => {
           // Check file extension to determine which app to open
           if (appName.endsWith('.png') || appName.endsWith('.jpg') || appName.endsWith('.jpeg') || appName.endsWith('.gif')) {
             const file = files.find(f => f.name === appName);
-            component = <ImageViewer imageSrc={file?.content || ''} />;
+            component = <ImageViewer imagePath={file?.content || ''} fileName={file?.name || appName} />;
             icon = 'Image';
             width = 900;
             height = 700;
