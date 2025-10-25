@@ -113,16 +113,25 @@ const Desktop = ({
 
   const handleRename = (file: FileItem) => {
     setRenamingFileId(file.id);
-    setRenameValue(file.name.replace('.txt', ''));
+    // Remove extension from name for editing
+    const nameWithoutExt = file.name.replace(/\.(txt|png|jpg|jpeg|gif)$/, '');
+    setRenameValue(nameWithoutExt);
     setRenameDialogOpen(true);
   };
 
   const handleRenameConfirm = () => {
     if (renameValue.trim() && renamingFileId) {
       const file = files.find(f => f.id === renamingFileId);
-      const finalName = file?.type === 'file' && !renameValue.endsWith('.txt') 
-        ? `${renameValue}.txt` 
-        : renameValue;
+      
+      // Get original extension
+      const extMatch = file?.name.match(/\.(txt|png|jpg|jpeg|gif)$/);
+      const originalExt = extMatch ? extMatch[0] : '';
+      
+      // If user didn't provide extension, add the original one
+      let finalName = renameValue;
+      if (file?.type === 'file' && !renameValue.match(/\.(txt|png|jpg|jpeg|gif)$/)) {
+        finalName = originalExt ? `${renameValue}${originalExt}` : `${renameValue}.txt`;
+      }
       
       const result = onRenameFile(renamingFileId, finalName);
       if (result.success) {
