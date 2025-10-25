@@ -9,6 +9,13 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from '@/components/ui/context-menu';
 import { toast } from 'sonner';
 
 interface FileItem {
@@ -294,69 +301,109 @@ const Explorer = () => {
         </Button>
       </div>
 
-      <div className="flex-1 overflow-auto p-4">
-        {currentFiles.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-            <Icon name="FolderOpen" size={64} className="mb-4 opacity-20" />
-            <p>Эта папка пуста</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-1">
-            {currentFiles.map(file => (
-              <div
-                key={file.id}
-                draggable
-                onDragStart={(e) => handleDragStart(e, file)}
-                onDragOver={(e) => file.type === 'folder' ? handleDragOver(e, file.id) : e.preventDefault()}
-                onDragLeave={handleDragLeave}
-                onDrop={(e) => file.type === 'folder' ? handleDrop(e, file) : e.preventDefault()}
-                className={`flex items-center gap-3 p-3 rounded-lg hover:bg-accent/50 cursor-pointer group transition-colors ${
-                  dragOverFolder === file.id ? 'bg-blue-500/20 border-2 border-blue-500' : ''
-                } ${
-                  draggingItem?.id === file.id ? 'opacity-50' : ''
-                }`}
-                onDoubleClick={() => file.type === 'folder' && handleNavigate(file.name)}
-              >
-                <Icon
-                  name={file.type === 'folder' ? 'Folder' : 'FileText'}
-                  size={20}
-                  className={file.type === 'folder' ? 'text-yellow-500' : 'text-blue-500'}
-                />
-                <div className="flex-1">
-                  <div className="font-medium">{file.name}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {file.type === 'folder' ? 'Папка с файлами' : file.size} • {file.modified}
-                  </div>
-                </div>
-                <div className="flex gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 opacity-0 group-hover:opacity-100"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRename(file.id, file.name);
-                    }}
-                  >
-                    <Icon name="Pencil" size={16} />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 opacity-0 group-hover:opacity-100"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete(file.id);
-                    }}
-                  >
-                    <Icon name="Trash2" size={16} />
-                  </Button>
-                </div>
+      <ContextMenu>
+        <ContextMenuTrigger asChild>
+          <div className="flex-1 overflow-auto p-4">
+            {currentFiles.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                <Icon name="FolderOpen" size={64} className="mb-4 opacity-20" />
+                <p>Эта папка пуста</p>
               </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-1">
+            {currentFiles.map(file => (
+              <ContextMenu key={file.id}>
+                <ContextMenuTrigger>
+                  <div
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, file)}
+                    onDragOver={(e) => file.type === 'folder' ? handleDragOver(e, file.id) : e.preventDefault()}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => file.type === 'folder' ? handleDrop(e, file) : e.preventDefault()}
+                    className={`flex items-center gap-3 p-3 rounded-lg hover:bg-accent/50 cursor-pointer group transition-colors ${
+                      dragOverFolder === file.id ? 'bg-blue-500/20 border-2 border-blue-500' : ''
+                    } ${
+                      draggingItem?.id === file.id ? 'opacity-50' : ''
+                    }`}
+                    onDoubleClick={() => file.type === 'folder' && handleNavigate(file.name)}
+                  >
+                    <Icon
+                      name={file.type === 'folder' ? 'Folder' : 'FileText'}
+                      size={20}
+                      className={file.type === 'folder' ? 'text-yellow-500' : 'text-blue-500'}
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium">{file.name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {file.type === 'folder' ? 'Папка с файлами' : file.size} • {file.modified}
+                      </div>
+                    </div>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 opacity-0 group-hover:opacity-100"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRename(file.id, file.name);
+                        }}
+                      >
+                        <Icon name="Pencil" size={16} />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 opacity-0 group-hover:opacity-100"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(file.id);
+                        }}
+                      >
+                        <Icon name="Trash2" size={16} />
+                      </Button>
+                    </div>
+                  </div>
+                </ContextMenuTrigger>
+                <ContextMenuContent className="z-[10000]">
+                  {file.type === 'folder' && (
+                    <>
+                      <ContextMenuItem onClick={() => handleNavigate(file.name)}>
+                        <Icon name="FolderOpen" size={16} className="mr-2" />
+                        Открыть
+                      </ContextMenuItem>
+                      <ContextMenuSeparator />
+                    </>
+                  )}
+                  <ContextMenuItem onClick={() => handleRename(file.id, file.name)}>
+                    <Icon name="Pencil" size={16} className="mr-2" />
+                    Переименовать
+                  </ContextMenuItem>
+                  <ContextMenuSeparator />
+                  <ContextMenuItem 
+                    onClick={() => handleDelete(file.id)}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Icon name="Trash2" size={16} className="mr-2" />
+                    Удалить
+                  </ContextMenuItem>
+                </ContextMenuContent>
+              </ContextMenu>
             ))}
           </div>
         )}
-      </div>
+          </div>
+        </ContextMenuTrigger>
+        <ContextMenuContent className="z-[10000]">
+          <ContextMenuItem onClick={() => handleCreateNew('folder')}>
+            <Icon name="FolderPlus" size={16} className="mr-2" />
+            Создать папку
+          </ContextMenuItem>
+          <ContextMenuItem onClick={() => handleCreateNew('file')}>
+            <Icon name="FilePlus" size={16} className="mr-2" />
+            Создать файл
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
 
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
         <DialogContent className="z-[10000]">
