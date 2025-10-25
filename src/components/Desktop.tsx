@@ -25,6 +25,7 @@ interface DesktopProps {
   onCreateFile: (name: string, type: 'file' | 'folder') => { success: boolean; error?: string };
   onDeleteFile: (id: string) => void;
   onRenameFile: (id: string, newName: string) => { success: boolean; error?: string };
+  onCopyFile: (id: string) => { success: boolean; error?: string };
 }
 
 const Desktop = ({
@@ -34,6 +35,7 @@ const Desktop = ({
   onCreateFile,
   onDeleteFile,
   onRenameFile,
+  onCopyFile,
 }: DesktopProps) => {
   const [draggingFile, setDraggingFile] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -144,6 +146,15 @@ const Desktop = ({
     }
   };
 
+  const handleCopy = (fileId: string) => {
+    const result = onCopyFile(fileId);
+    if (result.success) {
+      toast.success('Файл скопирован');
+    } else {
+      toast.error(result.error || 'Ошибка копирования');
+    }
+  };
+
   const getDisplayName = (name: string) => {
     const translations: { [key: string]: string } = {
       'Browser': 'Браузер',
@@ -191,6 +202,10 @@ const Desktop = ({
                   <ContextMenuItem onClick={() => onFileDoubleClick(file.name)}>
                     <Icon name="FolderOpen" className="mr-2" size={16} />
                     Открыть
+                  </ContextMenuItem>
+                  <ContextMenuItem onClick={() => handleCopy(file.id)}>
+                    <Icon name="Copy" className="mr-2" size={16} />
+                    Копировать
                   </ContextMenuItem>
                   <ContextMenuItem onClick={() => handleRename(file)}>
                     <Icon name="Edit" className="mr-2" size={16} />

@@ -348,6 +348,41 @@ const Index = () => {
     }
   };
 
+  const copyFile = (id: string): { success: boolean; error?: string } => {
+    const file = files.find(f => f.id === id);
+    if (!file) {
+      return { success: false, error: 'Файл не найден' };
+    }
+
+    // Get file extension
+    const extMatch = file.name.match(/\.(txt|png|jpg|jpeg|gif)$/);
+    const nameWithoutExt = file.name.replace(/\.(txt|png|jpg|jpeg|gif)$/, '');
+    const ext = extMatch ? extMatch[0] : '';
+
+    // Find unique name for copy
+    let copyNumber = 1;
+    let newName = `${nameWithoutExt} - копия${ext}`;
+    
+    while (files.find(f => f.name === newName)) {
+      copyNumber++;
+      newName = `${nameWithoutExt} - копия (${copyNumber})${ext}`;
+    }
+
+    // Create copy
+    const newFile: FileItem = {
+      id: `file-${Date.now()}`,
+      name: newName,
+      type: file.type,
+      content: file.content,
+      children: file.children ? [...file.children] : undefined,
+      x: (file.x || 50) + 20,
+      y: (file.y || 50) + 20,
+    };
+
+    setFiles([...files, newFile]);
+    return { success: true };
+  };
+
   return (
     <div className="h-screen w-screen overflow-hidden relative bg-desktop">
       <Desktop 
@@ -357,6 +392,7 @@ const Index = () => {
         onCreateFile={createNewFile}
         onDeleteFile={deleteFile}
         onRenameFile={renameFile}
+        onCopyFile={copyFile}
       />
       
       {windows.map(window => {
