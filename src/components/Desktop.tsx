@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Icon from '@/components/ui/icon';
 import { FileItem } from '@/pages/Index';
 import {
@@ -26,6 +26,7 @@ interface DesktopProps {
   onDeleteFile: (id: string) => void;
   onRenameFile: (id: string, newName: string) => { success: boolean; error?: string };
   onCopyFile: (id: string) => { success: boolean; error?: string };
+  onImportFile: (name: string, content: string, size: number) => { success: boolean; error?: string };
 }
 
 const Desktop = ({
@@ -36,6 +37,7 @@ const Desktop = ({
   onDeleteFile,
   onRenameFile,
   onCopyFile,
+  onImportFile,
 }: DesktopProps) => {
   const [draggingFile, setDraggingFile] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -48,6 +50,7 @@ const Desktop = ({
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
   const [copiedFileId, setCopiedFileId] = useState<string | null>(null);
   const [lastTap, setLastTap] = useState<{ time: number; fileId: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleMouseDown = (e: React.MouseEvent, file: FileItem) => {
     if (e.button !== 0) return;
@@ -208,6 +211,54 @@ const Desktop = ({
     }
   };
 
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const MAX_SIZE = 54 * 1024 * 1024; // 54 MB
+
+    if (file.size > MAX_SIZE) {
+      toast.error(`Этот файл весит более 54 MB (${(file.size / 1024 / 1024).toFixed(1)} MB)`);
+      e.target.value = '';
+      return;
+    }
+
+    // Check file extension
+    const allowedExtensions = ['.pdf', '.pptx', '.mp4', '.mp3', '.txt', '.png', '.jpg', '.jpeg', '.gif', '.exe'];
+    const fileExt = '.' + file.name.split('.').pop()?.toLowerCase();
+    if (!allowedExtensions.includes(fileExt)) {
+      toast.error('Неподдерживаемый формат файла');
+      e.target.value = '';
+      return;
+    }
+
+    try {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const content = event.target?.result as string;
+        const result = onImportFile(file.name, content, file.size);
+        if (result.success) {
+          toast.success(`Файл "${file.name}" загружен!`);
+        } else {
+          toast.error(result.error || 'Ошибка загрузки файла');
+        }
+        e.target.value = '';
+      };
+      reader.onerror = () => {
+        toast.error('Ошибка чтения файла');
+        e.target.value = '';
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      toast.error('Ошибка загрузки файла');
+      e.target.value = '';
+    }
+  };
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.key === 'c' && selectedFileId) {
@@ -314,8 +365,20 @@ const Desktop = ({
             <Icon name="Folder" className="mr-2" size={16} />
             Новая папка
           </ContextMenuItem>
+          <ContextMenuItem onClick={handleImportClick}>
+            <Icon name="Upload" className="mr-2" size={16} />
+            Загрузить файл
+          </ContextMenuItem>
         </ContextMenuContent>
       </ContextMenu>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,.pptx,.mp4,.mp3,.txt,.png,.jpg,.jpeg,.gif,.exe"
+        onChange={handleFileImport}
+        className="hidden"
+      />
 
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
         <DialogContent className="z-[10000]">
@@ -370,6 +433,24 @@ const getFileIcon = (name: string): string => {
   if (name === 'Calculator') return 'Calculator';
   if (name === 'Settings') return 'Settings';
   if (name === 'Explorer') return 'FolderOpen';
+  
+  // Media files
+  if (name.endsWith('.mp4')) return 'Video';
+  if (name.endsWith('.mp3')) return 'Music';
+  
+  // Documents
+  if (name.endsWith('.pdf')) return 'FileText';
+  if (name.endsWith('.pptx')) return 'Presentation';
+  
+  // Images
+  if (name.endsWith('.png') || name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.gif')) return 'Image';
+  
+  // Text files
+  if (name.endsWith('.txt')) return 'FileText';
+  
+  // Executables
+  if (name.endsWith('.exe')) return 'Cog';
+  
   return 'File';
 };
 

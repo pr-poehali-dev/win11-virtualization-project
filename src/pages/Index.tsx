@@ -10,6 +10,12 @@ import Explorer from '@/components/apps/Explorer';
 import Calculator from '@/components/apps/Calculator';
 import Paint from '@/components/apps/Paint';
 import ImageViewer from '@/components/apps/ImageViewer';
+import VideoPlayer from '@/components/apps/VideoPlayer';
+import AudioPlayer from '@/components/apps/AudioPlayer';
+import PDFViewer from '@/components/apps/PDFViewer';
+import PPTXViewer from '@/components/apps/PPTXViewer';
+import CommandPrompt from '@/components/apps/CommandPrompt';
+import ExeRunner from '@/components/apps/ExeRunner';
 
 export interface FileItem {
   id: string;
@@ -162,10 +168,19 @@ const Index = () => {
         height = 650;
         break;
       case 'Paint':
-        component = <Paint fileName='Рисунок' onSave={saveFileContent} />;
+        component = <Paint fileName='Рисунок' onSave={(dataUrl, fileName) => saveFileContent(dataUrl, fileName)} />;
         icon = 'Paintbrush';
         width = 900;
         height = 700;
+        break;
+      case 'CMD':
+        component = <CommandPrompt files={files} onCreateFile={createNewFile} onDeleteFile={(name) => {
+          const file = files.find(f => f.name === name);
+          if (file) deleteFile(file.id);
+        }} />;
+        icon = 'Terminal';
+        width = 800;
+        height = 600;
         break;
       default:
         if (files.find(f => f.name === appName && f.type === 'folder')) {
@@ -175,12 +190,38 @@ const Index = () => {
           height = 650;
         } else if (files.find(f => f.name === appName && f.type === 'file')) {
           // Check file extension to determine which app to open
+          const file = files.find(f => f.name === appName);
+          
           if (appName.endsWith('.png') || appName.endsWith('.jpg') || appName.endsWith('.jpeg') || appName.endsWith('.gif')) {
-            const file = files.find(f => f.name === appName);
             component = <ImageViewer imagePath={file?.content || ''} fileName={file?.name || appName} />;
             icon = 'Image';
             width = 900;
             height = 700;
+          } else if (appName.endsWith('.mp4')) {
+            component = <VideoPlayer videoSrc={file?.content || ''} fileName={file?.name || appName} />;
+            icon = 'Video';
+            width = 900;
+            height = 700;
+          } else if (appName.endsWith('.mp3')) {
+            component = <AudioPlayer audioSrc={file?.content || ''} fileName={file?.name || appName} />;
+            icon = 'Music';
+            width = 600;
+            height = 400;
+          } else if (appName.endsWith('.pdf')) {
+            component = <PDFViewer pdfSrc={file?.content || ''} fileName={file?.name || appName} />;
+            icon = 'FileText';
+            width = 900;
+            height = 700;
+          } else if (appName.endsWith('.pptx')) {
+            component = <PPTXViewer pptxSrc={file?.content || ''} fileName={file?.name || appName} />;
+            icon = 'Presentation';
+            width = 700;
+            height = 600;
+          } else if (appName.endsWith('.exe')) {
+            component = <ExeRunner fileName={file?.name || appName} />;
+            icon = 'Cog';
+            width = 700;
+            height = 600;
           } else {
             openFileInNotepad(appName);
             return;
@@ -395,6 +436,31 @@ const Index = () => {
     return { success: true };
   };
 
+  const importFile = (name: string, content: string, size: number): { success: boolean; error?: string } => {
+    // Check if file with same name exists
+    const existingFile = files.find(f => f.name === name);
+    if (existingFile) {
+      // Update existing file
+      setFiles(files.map(f => 
+        f.name === name ? { ...f, content } : f
+      ));
+      return { success: true };
+    }
+
+    // Create new file
+    const newFile: FileItem = {
+      id: `file-${Date.now()}`,
+      name,
+      type: 'file',
+      content,
+      x: 50,
+      y: 50 + files.length * 100,
+    };
+
+    setFiles([...files, newFile]);
+    return { success: true };
+  };
+
   return (
     <div className="h-screen w-screen overflow-hidden relative bg-desktop">
       <Desktop 
@@ -405,6 +471,7 @@ const Index = () => {
         onDeleteFile={deleteFile}
         onRenameFile={renameFile}
         onCopyFile={copyFile}
+        onImportFile={importFile}
       />
       
       {windows.map(window => {

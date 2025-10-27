@@ -58,6 +58,24 @@ const Paint = ({ fileName = 'Рисунок', onSave }: PaintProps) => {
     }
   };
 
+  const startDrawingTouch = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    e.preventDefault();
+    setIsDrawing(true);
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0];
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+    }
+  };
+
   const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isDrawing) return;
 
@@ -67,6 +85,29 @@ const Paint = ({ fileName = 'Рисунок', onSave }: PaintProps) => {
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
+
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.strokeStyle = tool === 'eraser' ? '#FFFFFF' : color;
+      ctx.lineWidth = brushSize;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.lineTo(x, y);
+      ctx.stroke();
+    }
+  };
+
+  const drawTouch = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    if (!isDrawing) return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0];
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
 
     const ctx = canvas.getContext('2d');
     if (ctx) {
@@ -194,11 +235,14 @@ const Paint = ({ fileName = 'Рисунок', onSave }: PaintProps) => {
           ref={canvasRef}
           width={800}
           height={600}
-          className="border border-border bg-white cursor-crosshair shadow-lg"
+          className="border border-border bg-white cursor-crosshair shadow-lg touch-none"
           onMouseDown={startDrawing}
           onMouseMove={draw}
           onMouseUp={stopDrawing}
           onMouseLeave={stopDrawing}
+          onTouchStart={startDrawingTouch}
+          onTouchMove={drawTouch}
+          onTouchEnd={stopDrawing}
         />
       </div>
 

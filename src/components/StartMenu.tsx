@@ -13,6 +13,7 @@ const apps = [
   { name: 'Calculator', displayName: 'Калькулятор', icon: 'Calculator', color: 'bg-purple-500' },
   { name: 'Explorer', displayName: 'Проводник', icon: 'FolderOpen', color: 'bg-orange-500' },
   { name: 'Paint', displayName: 'Paint', icon: 'Paintbrush', color: 'bg-pink-500' },
+  { name: 'CMD', displayName: 'Командная строка', icon: 'Terminal', color: 'bg-black' },
   { name: 'Settings', displayName: 'Настройки', icon: 'Settings', color: 'bg-gray-500' },
 ];
 
